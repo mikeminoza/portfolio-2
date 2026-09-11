@@ -189,7 +189,7 @@ const fallbackSkills: SkillGroup[] = [
 ];
 
 const fallbackEducation: Education = {
-  degree: "BSc Information Systems",
+  degree: "Bachelor of Science in Information Systems",
   school: "Cebu Technological University — Main Campus",
   period: "2021 — 2025",
   honors: "Cum Laude",

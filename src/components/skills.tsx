@@ -47,14 +47,18 @@ export function Skills({
             Education
           </h3>
           <div>
-            <p className="text-lg font-medium tracking-tight">
-              {education.degree}
+            {/* Flex rather than an inline pill: the degree name is long enough
+                to wrap, and an inline badge strands itself on the last line. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <p className="text-lg font-medium tracking-tight">
+                {education.degree}
+              </p>
               {education.honors && (
-                <span className="ml-3 rounded-full border border-accent px-2.5 py-0.5 align-middle font-mono text-[11px] font-normal text-accent">
+                <span className="shrink-0 whitespace-nowrap rounded-full border border-accent px-2.5 py-0.5 font-mono text-[11px] text-accent">
                   {education.honors}
                 </span>
               )}
-            </p>
+            </div>
             <p className="mt-1 text-muted">{education.school}</p>
             <p className="mt-1 font-mono text-xs text-muted">{education.period}</p>
           </div>

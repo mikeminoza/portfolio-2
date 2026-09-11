@@ -9,7 +9,7 @@ export const education = defineType({
     defineField({
       name: "degree",
       type: "string",
-      description: 'e.g. "BSc Information Systems".',
+      description: 'Write it out in full, e.g. "Bachelor of Science in Information Systems".',
       validation: (rule) => rule.required(),
     }),
     defineField({
