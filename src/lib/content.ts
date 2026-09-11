@@ -126,7 +126,7 @@ const fallbackProjects: Project[] = [
     role: "Full-stack",
     stack: ["Next.js", "React", "Supabase", "Gemini AI"],
     repo: "https://github.com/mikeminoza/SparkQuiz",
-    demo: "https://spark-quiz-phi.vercel.app",
+    demo: "https://sparkquiz.vercel.app",
   },
   {
     slug: "mednexus",
