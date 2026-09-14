@@ -1,74 +1,54 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { charIn, stagger } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { ease } from "@/lib/motion";
 
 /**
- * Section title that reveals word by word when it scrolls into view.
+ * Section marker in the technical-editorial idiom: a hairline rule that draws
+ * itself, then a numbered monospace label with optional right-aligned meta.
  *
- * Same masked-rise treatment as the hero, so headings feel like one family
- * rather than two unrelated effects.
+ * Deliberately small. The rule and the number do the organising, so the
+ * largest type on the page stays with the content rather than the labels.
  */
 export function SectionHeading({
+  index,
   children,
-  className,
-  count,
+  meta,
 }: {
+  /** Section number, rendered zero-padded. */
+  index: number;
   children: string;
-  className?: string;
-  /** Optional item count rendered as a monospace counter on the right. */
-  count?: number;
+  /** Right-aligned detail, e.g. "02 entries". */
+  meta?: string;
 }) {
   const reduced = useReducedMotion();
-  const words = children.split(" ");
 
   return (
-    <header className="mb-14 flex items-baseline justify-between gap-4">
-      <h2
-        className={cn(
-          "text-3xl font-semibold tracking-tight md:text-4xl",
-          className,
-        )}
-      >
-        {reduced ? (
-          children
-        ) : (
-          <motion.span
-            className="inline-block"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.6 }}
-            variants={stagger(0.07)}
-            aria-label={children}
-          >
-            {words.map((word, i) => (
-              <span
-                key={`${word}-${i}`}
-                className="inline-block overflow-hidden pb-[0.12em] align-bottom"
-                aria-hidden
-              >
-                <motion.span className="inline-block" variants={charIn}>
-                  {word}
-                  {i < words.length - 1 ? " " : ""}
-                </motion.span>
-              </span>
-            ))}
-          </motion.span>
-        )}
-      </h2>
+    <header className="mb-12 md:mb-16">
+      <motion.div
+        aria-hidden
+        className="h-px w-full origin-left bg-accent"
+        initial={reduced ? undefined : { scaleX: 0 }}
+        whileInView={reduced ? undefined : { scaleX: 1 }}
+        viewport={{ once: true, amount: "some" }}
+        transition={{ duration: 0.9, ease }}
+      />
 
-      {typeof count === "number" && (
-        <motion.span
-          initial={reduced ? undefined : { opacity: 0 }}
-          whileInView={reduced ? undefined : { opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.35 }}
-          className="font-mono text-xs text-muted"
-        >
-          {String(count).padStart(2, "0")}
-        </motion.span>
-      )}
+      <motion.div
+        className="mt-4 flex items-baseline justify-between gap-6"
+        initial={reduced ? undefined : { opacity: 0, y: 8 }}
+        whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: "some" }}
+        transition={{ duration: 0.6, ease, delay: 0.15 }}
+      >
+        <h2 className="label text-foreground">
+          <span className="text-accent">{String(index).padStart(2, "0")}</span>
+          <span className="mx-2 text-muted">/</span>
+          {children}
+        </h2>
+
+        {meta && <span className="label shrink-0 text-muted">{meta}</span>}
+      </motion.div>
     </header>
   );
 }

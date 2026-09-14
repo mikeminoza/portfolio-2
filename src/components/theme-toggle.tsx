@@ -18,7 +18,7 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={mounted ? `Switch to ${isDark ? "light" : "dark"} theme` : "Toggle theme"}
-      className="relative grid size-9 place-items-center rounded-full border border-border text-muted transition-colors hover:text-foreground"
+      className="relative grid size-8 place-items-center border border-border text-muted transition-colors hover:border-accent hover:text-accent"
     >
       {mounted && (
         <AnimatePresence mode="wait" initial={false}>

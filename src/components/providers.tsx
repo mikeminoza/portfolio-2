@@ -52,10 +52,16 @@ function SmoothScroll({ children }: { children: React.ReactNode }) {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
+    /*
+     * Dark is the design's home state, so it is the default rather than the
+     * OS preference. `enableSystem` has to be off for that to hold: left on,
+     * the system preference wins and `defaultTheme` only applies when none
+     * can be read. The toggle still switches and still persists per visitor.
+     */
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="dark"
+      enableSystem={false}
       disableTransitionOnChange
     >
       <SmoothScroll>{children}</SmoothScroll>

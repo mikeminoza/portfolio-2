@@ -41,6 +41,88 @@ src/
     use-active-section.ts  IntersectionObserver section tracking
 ```
 
+## Design system
+
+Technical-editorial: it should read like a well-made technical spec, not a
+portfolio template. Structure is carried by hairline rules, numbered sections
+and monospace labels rather than by cards, shadows and rounded corners.
+
+### Palette
+
+Cool near-neutral greys, near-black ink, one teal signal colour —
+instrumentation rather than marketing. Tokens live in `globals.css`; every
+component reads them, so retheming is one file.
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--background` | `#f7f8f8` | `#0b0f10` |
+| `--foreground` | `#0e1214` | `#e8edee` |
+| `--muted` | `#5c666b` | `#8a959a` |
+| `--border` | `#dde2e3` | `#212829` |
+| `--accent` | `#0b6e7f` | `#22d3ee` |
+| `--surface` | `#eff2f2` | `#131819` |
+
+Dark is the default: `defaultTheme="dark"` with `enableSystem={false}` in
+`providers.tsx`. `enableSystem` has to be off for that to hold — left on, the
+OS preference wins and `defaultTheme` only applies when none can be read. The
+toggle still switches and persists per visitor in `localStorage`.
+
+Contrast is checked, not assumed. Accent lands on 11px text (section numbers,
+company names, project links), so it is measured against the surface as well
+as the ground — a value that passes on one can fail on the other.
+
+| Pair | Light | Dark |
+| --- | --- | --- |
+| ink / ground | 17.7 | 16.3 |
+| muted / ground | 5.5 | 6.3 |
+| accent / ground | 5.6 | 10.7 |
+| accent / surface | 5.3 | 9.9 |
+
+All clear WCAG AA for normal text in both themes.
+
+### Type
+
+Two families, with a deliberate contrast between them:
+
+- **Archivo** — display and prose, set tight (`-0.02em` on headings).
+- **IBM Plex Mono** — every piece of structure: section numbers, dates,
+  labels, metadata, stack lists. Set loose (`0.15em`, uppercase, 11px).
+
+Tight headings against loose structure is the whole idea, so it lives in
+`globals.css` as the `label` utility rather than being repeated per component.
+
+### Conventions
+
+- Sections are numbered (`01 / EXPERIENCE`) and introduced by an accent rule
+  that draws itself on scroll.
+- No rounded corners, no shadows. Borders are 1px and do the work.
+- The hero sits on a faint 72px engineering grid, masked to a soft pool,
+  instead of the usual blurred colour blob.
+
+## Assistant
+
+A floating widget (bottom right) that answers questions about the CV.
+
+**It is scripted, not a language model** — and the panel header says so, because
+letting a visitor assume otherwise would be the wrong kind of surprise. There is
+no API key, no per-message cost and no public abuse surface.
+
+`src/lib/chat.ts` holds the whole engine as one pure function:
+
+```
+answer(query, context) -> { text, suggestions }
+```
+
+It resolves in three passes — a project named outright, then a technology named
+outright, then a keyword-scored intent (experience, projects, stack, education,
+contact, location), with an honest fallback that says what it does and does not
+know. Every answer is built from the same `content.ts` the page renders, so the
+assistant cannot contradict the CV: add a project in the CMS and it starts
+answering about it with no code change.
+
+To make it live later, replace the body of `answer()` with a call to a route
+handler. The widget, the types and the call site do not change.
+
 ## Animation notes
 
 Two libraries, deliberately split:

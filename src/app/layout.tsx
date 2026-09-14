@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+/** Tight grotesk for display and prose. */
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  display: "swap",
+});
 
-const title = "Mike Arthur Miñoza — Backend Web Developer";
+/** Carries every piece of structure: labels, numbers, dates, metadata. */
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+});
+
+const title = "Mike Arthur Miñoza — Full-Stack Developer";
 const description =
-  "Backend developer in Cebu City building PHP and Laravel applications on MySQL, and integrating their APIs with React, Vue and Next.js frontends.";
+  "Full-stack developer in Cebu City building web applications end to end — Laravel and PHP on the server, React, Vue and Next.js on the front.";
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <Providers>{children}</Providers>

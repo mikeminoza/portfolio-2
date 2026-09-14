@@ -73,7 +73,7 @@ export function Marquee({
   return (
     <section
       aria-hidden
-      className="relative overflow-hidden border-y border-border py-5"
+      className="relative overflow-hidden border-y border-border py-4"
     >
       {/* Feathered edges so items dissolve rather than getting chopped. */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-background to-transparent" />
@@ -102,9 +102,9 @@ export function Marquee({
 
 function Item({ label }: { label: string }) {
   return (
-    <span className="flex shrink-0 items-center gap-10 font-mono text-sm uppercase tracking-[0.15em] text-muted">
+    <span className="label flex shrink-0 items-center gap-10 text-muted">
       {label}
-      <span className="size-1 rounded-full bg-accent" />
+      <span aria-hidden className="h-3 w-px bg-accent" />
     </span>
   );
 }

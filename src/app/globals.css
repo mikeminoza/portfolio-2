@@ -2,22 +2,33 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Technical-editorial palette: cool near-neutral greys, near-black ink, and a
+ * single teal signal colour used sparingly — instrumentation rather than
+ * marketing. Hex rather than oklch so the values stay exactly as specified.
+ *
+ * Accent lands on 11px text (section numbers, company names, project links),
+ * so both accents are chosen to clear WCAG AA against the ground and the
+ * surface, not just the ground.
+ */
 :root {
-  --background: oklch(0.99 0.002 260);
-  --foreground: oklch(0.18 0.012 260);
-  --muted: oklch(0.52 0.015 260);
-  --border: oklch(0.91 0.006 260);
-  --accent: oklch(0.58 0.19 265);
-  --surface: oklch(0.97 0.004 260);
+  --background: #f7f8f8;
+  --foreground: #0e1214;
+  --muted: #5c666b;
+  --border: #dde2e3;
+  /* 5.56:1 on ground, 5.25:1 on surface. */
+  --accent: #0b6e7f;
+  --surface: #eff2f2;
 }
 
 .dark {
-  --background: oklch(0.15 0.012 265);
-  --foreground: oklch(0.96 0.004 260);
-  --muted: oklch(0.66 0.018 265);
-  --border: oklch(0.28 0.014 265);
-  --accent: oklch(0.72 0.16 265);
-  --surface: oklch(0.19 0.014 265);
+  --background: #0b0f10;
+  --foreground: #e8edee;
+  --muted: #8a959a;
+  --border: #212829;
+  /* 10.66:1 on ground, 9.91:1 on surface. */
+  --accent: #22d3ee;
+  --surface: #131819;
 }
 
 @theme inline {
@@ -27,8 +38,8 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-surface: var(--surface);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-plex-mono);
 }
 
 @layer base {
@@ -43,9 +54,40 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  ::selection {
-    background: color-mix(in oklch, var(--accent) 28%, transparent);
+  /* Headings are set tight; structure is set loose. That contrast is the
+     whole idea, so it lives here rather than being repeated per component. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
   }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--background);
+  }
+}
+
+@utility label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+@utility rule {
+  height: 1px;
+  width: 100%;
+  background: var(--border);
+}
+
+/* Faint engineering grid. Sits behind the hero only. */
+@utility grid-paper {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 72px 72px;
 }
 
 /* Lenis */

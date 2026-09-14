@@ -34,7 +34,7 @@ export function Projects({ projects }: { projects: Project[] }) {
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
   const smoothVelocity = useSpring(velocity, { damping: 50, stiffness: 320 });
-  const skewY = useTransform(smoothVelocity, [-2500, 0, 2500], [2.2, 0, -2.2], {
+  const skewY = useTransform(smoothVelocity, [-2500, 0, 2500], [1.6, 0, -1.6], {
     clamp: true,
   });
 
@@ -62,7 +62,7 @@ export function Projects({ projects }: { projects: Project[] }) {
       gsap.utils.toArray<HTMLElement>(".js-row").forEach((row) => {
         gsap.from(row, {
           opacity: 0,
-          y: 48,
+          y: 40,
           duration: 0.9,
           ease: "power3.out",
           scrollTrigger: { trigger: row, start: "top 85%", once: true },
@@ -76,12 +76,16 @@ export function Projects({ projects }: { projects: Project[] }) {
     <section
       ref={root}
       id="work"
-      className="relative mx-auto max-w-5xl scroll-mt-24 px-6 py-28 md:px-10 md:py-40"
+      className="relative mx-auto max-w-5xl scroll-mt-24 px-6 py-20 md:px-10 md:py-28"
     >
-      <SectionHeading count={projects.length}>Selected work</SectionHeading>
+      <SectionHeading
+        index={2}
+        meta={`${String(projects.length).padStart(2, "0")} selected`}
+      >
+        Work
+      </SectionHeading>
 
       <div className="relative">
-        {/* progress rail */}
         <div
           aria-hidden
           className="absolute left-0 top-0 hidden h-full w-px bg-border md:block"
@@ -89,10 +93,7 @@ export function Projects({ projects }: { projects: Project[] }) {
           <div className="js-rail h-full w-px origin-top bg-accent" />
         </div>
 
-        <motion.ol
-          className="md:pl-10"
-          style={reduced ? undefined : { skewY }}
-        >
+        <motion.ol className="md:pl-10" style={reduced ? undefined : { skewY }}>
           {projects.map((project, i) => (
             <ProjectRow key={project.slug} project={project} index={i} />
           ))}
@@ -109,12 +110,12 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
   // Pointer-tracked spotlight, so the row lights up under the cursor.
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const spotlight = useMotionTemplate`radial-gradient(22rem circle at ${mouseX}px ${mouseY}px, color-mix(in oklch, var(--accent) 10%, transparent), transparent 70%)`;
+  const spotlight = useMotionTemplate`radial-gradient(20rem circle at ${mouseX}px ${mouseY}px, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%)`;
 
   return (
     <li
       ref={ref}
-      className="js-row group relative border-b border-border py-10 first:pt-0 last:border-0"
+      className="js-row group relative border-t border-border py-10 last:border-b"
       onPointerMove={(event) => {
         if (reduced || event.pointerType !== "mouse") return;
         const rect = ref.current?.getBoundingClientRect();
@@ -127,43 +128,38 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
         <motion.div
           aria-hidden
           style={{ background: spotlight }}
-          className="pointer-events-none absolute -inset-x-6 inset-y-0 -z-10 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          className="pointer-events-none absolute -inset-x-6 inset-y-0 -z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         />
       )}
 
-      <article className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
+      <article className="grid gap-x-10 gap-y-6 md:grid-cols-[1fr_14rem] md:items-start">
         <div>
-          <div className="mb-3 flex items-center gap-3 font-mono text-xs text-muted">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <span className="h-px w-6 bg-border" />
+          <div className="label flex items-center gap-3 text-muted">
+            <span className="text-accent">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span aria-hidden className="h-px w-5 bg-border" />
             <span>{project.year}</span>
-            <span className="h-px w-6 bg-border" />
+            <span aria-hidden>·</span>
             <span>{project.role}</span>
           </div>
 
-          <h3 className="text-2xl font-medium tracking-tight transition-colors group-hover:text-accent md:text-3xl">
+          <h3 className="mt-4 text-3xl font-medium transition-colors duration-300 group-hover:text-accent md:text-4xl">
             {project.title}
           </h3>
 
-          <p className="mt-3 max-w-xl text-pretty leading-relaxed text-muted">
+          <p className="mt-4 max-w-xl text-pretty leading-relaxed text-muted">
             {project.summary}
           </p>
 
-          <ul className="mt-5 flex flex-wrap gap-2">
-            {project.stack.map((tech) => (
-              <li
-                key={tech}
-                className="rounded-full border border-border px-3 py-1 font-mono text-[11px] text-muted transition-colors group-hover:border-accent/40"
-              >
-                {tech}
-              </li>
-            ))}
-          </ul>
+          <p className="label mt-6 text-muted/70">
+            {project.stack.join("  ·  ")}
+          </p>
         </div>
 
-        <div className="flex shrink-0 flex-col items-start gap-4 md:items-end">
+        <div className="flex flex-col items-start gap-5 md:items-end">
           {project.cover && (
-            <div className="w-full overflow-hidden rounded-lg border border-border md:w-56">
+            <div className="w-full overflow-hidden border border-border">
               <Image
                 src={urlFor(project.cover).width(640).height(400).url()}
                 alt={project.cover.alt ?? project.title}
@@ -175,10 +171,8 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
             </div>
           )}
 
-          <div className="flex items-center gap-4">
-            {project.demo && (
-              <ProjectLink href={project.demo}>Live</ProjectLink>
-            )}
+          <div className="flex items-center gap-5">
+            {project.demo && <ProjectLink href={project.demo}>Live</ProjectLink>}
             {project.repo && <ProjectLink href={project.repo}>Code</ProjectLink>}
           </div>
         </div>
@@ -199,7 +193,7 @@ function ProjectLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="group/link inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+      className="label group/link inline-flex items-center gap-1.5 border-b border-border pb-1 text-muted transition-colors hover:border-accent hover:text-accent"
     >
       {children}
       <span

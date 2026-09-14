@@ -7,39 +7,43 @@ export function Experience({ roles }: { roles: Role[] }) {
   return (
     <section
       id="experience"
-      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-24 md:px-10 md:py-32"
+      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 md:px-10 md:py-28"
     >
-      <SectionHeading count={roles.length}>Experience</SectionHeading>
+      <SectionHeading
+        index={1}
+        meta={`${String(roles.length).padStart(2, "0")} entries`}
+      >
+        Experience
+      </SectionHeading>
 
-      <RevealGroup className="space-y-12" gap={0.12}>
+      <RevealGroup gap={0.12}>
         {roles.map((role) => (
           <Reveal
             key={`${role.company}-${role.period}`}
             as="article"
             variants={riseIn}
-            className="grid gap-4 border-t border-border pt-8 md:grid-cols-[13rem_1fr] md:gap-10"
+            className="grid gap-x-10 gap-y-4 border-t border-border py-8 md:grid-cols-[12rem_1fr]"
           >
             <div className="md:sticky md:top-24 md:self-start">
-              <p className="font-mono text-xs text-muted">{role.period}</p>
+              <p className="label text-muted">{role.period}</p>
               {role.employment && (
-                <p className="mt-2 inline-block rounded-full border border-border px-2.5 py-0.5 font-mono text-[11px] text-muted">
-                  {role.employment}
-                </p>
+                <p className="label mt-2 text-muted/70">{role.employment}</p>
               )}
             </div>
 
             <div>
-              <h3 className="text-xl font-medium tracking-tight md:text-2xl">
-                {role.title}
-              </h3>
-              <p className="mt-1 text-accent">{role.company}</p>
+              <h3 className="text-2xl font-medium md:text-3xl">{role.title}</h3>
+              <p className="label mt-2 text-accent">{role.company}</p>
 
-              <ul className="mt-5 space-y-2.5">
+              <ul className="mt-6 space-y-3">
                 {role.highlights.map((highlight, i) => (
                   <li
                     key={i}
-                    className="relative pl-5 text-pretty leading-relaxed text-muted before:absolute before:left-0 before:top-[0.7em] before:size-1 before:rounded-full before:bg-border"
+                    className="grid grid-cols-[2.5rem_1fr] items-baseline gap-2 text-pretty leading-relaxed text-muted"
                   >
+                    <span className="label text-muted/50">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                     {highlight}
                   </li>
                 ))}

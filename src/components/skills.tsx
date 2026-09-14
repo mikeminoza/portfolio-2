@@ -13,25 +13,23 @@ export function Skills({
   return (
     <section
       id="skills"
-      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-24 md:px-10 md:py-32"
+      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 md:px-10 md:py-28"
     >
-      <SectionHeading>Skills &amp; tools</SectionHeading>
+      <SectionHeading index={3}>Stack</SectionHeading>
 
-      <RevealGroup className="space-y-8" gap={0.07}>
+      <RevealGroup gap={0.07}>
         {groups.map((group) => (
           <Reveal
             key={group.title}
             variants={riseIn}
-            className="grid gap-3 border-t border-border pt-6 md:grid-cols-[13rem_1fr] md:gap-10"
+            className="grid gap-x-10 gap-y-3 border-t border-border py-6 md:grid-cols-[12rem_1fr]"
           >
-            <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-muted">
-              {group.title}
-            </h3>
+            <h3 className="label text-muted">{group.title}</h3>
             <ul className="flex flex-wrap gap-2">
               {group.items.map((item) => (
                 <li
                   key={item}
-                  className="rounded-full border border-border bg-surface px-3 py-1 text-sm text-muted transition-colors hover:border-accent hover:text-foreground"
+                  className="border border-border px-2.5 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
                 >
                   {item}
                 </li>
@@ -41,27 +39,21 @@ export function Skills({
         ))}
       </RevealGroup>
 
-      <Reveal className="mt-16 border-t border-border pt-8">
-        <div className="grid gap-3 md:grid-cols-[13rem_1fr] md:gap-10">
-          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-muted">
-            Education
-          </h3>
-          <div>
-            {/* Flex rather than an inline pill: the degree name is long enough
-                to wrap, and an inline badge strands itself on the last line. */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <p className="text-lg font-medium tracking-tight">
-                {education.degree}
-              </p>
-              {education.honors && (
-                <span className="shrink-0 whitespace-nowrap rounded-full border border-accent px-2.5 py-0.5 font-mono text-[11px] text-accent">
-                  {education.honors}
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-muted">{education.school}</p>
-            <p className="mt-1 font-mono text-xs text-muted">{education.period}</p>
+      <Reveal className="grid gap-x-10 gap-y-3 border-y border-border py-6 md:grid-cols-[12rem_1fr]">
+        <h3 className="label text-muted">Education</h3>
+        <div>
+          {/* Flex rather than an inline pill: the degree name is long enough
+              to wrap, and an inline badge strands itself on the last line. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="text-lg font-medium">{education.degree}</p>
+            {education.honors && (
+              <span className="label shrink-0 whitespace-nowrap border border-accent px-2 py-1 text-accent">
+                {education.honors}
+              </span>
+            )}
           </div>
+          <p className="mt-2 text-muted">{education.school}</p>
+          <p className="label mt-2 text-muted/70">{education.period}</p>
         </div>
       </Reveal>
     </section>

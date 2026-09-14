@@ -1,31 +1,37 @@
 import { Reveal } from "@/components/reveal";
+import { SectionHeading } from "@/components/section-heading";
 import type { Profile } from "@/lib/content";
 
 export function SiteFooter({ profile }: { profile: Profile }) {
   return (
     <footer
       id="contact"
-      className="mx-auto max-w-5xl scroll-mt-24 border-t border-border px-6 py-24 md:px-10 md:py-32"
+      className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 md:px-10 md:py-28"
     >
+      <SectionHeading index={4} meta={profile.location}>
+        Contact
+      </SectionHeading>
+
       <Reveal>
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
-          Contact
-        </p>
-        <h2 className="mt-6 text-balance text-3xl font-semibold tracking-tight md:text-5xl">
+        <h3 className="max-w-2xl text-balance text-[clamp(2rem,5.5vw,3.75rem)] font-semibold leading-[1.02]">
           Open to new opportunities.
-        </h2>
-        <p className="mt-4 max-w-md text-pretty leading-relaxed text-muted">
-          Based in {profile.location}, and happy to work with teams anywhere.
-        </p>
+        </h3>
+
         <a
           href={`mailto:${profile.email}`}
-          className="mt-8 inline-block text-lg text-muted underline decoration-border underline-offset-8 transition-colors hover:text-accent hover:decoration-accent"
+          className="group mt-10 inline-flex items-center gap-4 border-b border-border pb-2 text-lg text-muted transition-colors hover:border-accent hover:text-accent md:text-2xl"
         >
           {profile.email}
+          <span
+            aria-hidden
+            className="transition-transform duration-300 group-hover:translate-x-1"
+          >
+            →
+          </span>
         </a>
 
-        <div className="mt-16 flex flex-wrap items-center justify-between gap-6 border-t border-border pt-8">
-          <p className="font-mono text-xs text-muted">
+        <div className="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-border pt-6">
+          <p className="label text-muted/70">
             &copy; {new Date().getFullYear()} {profile.name}
           </p>
           <ul className="flex flex-wrap gap-6">
@@ -33,7 +39,7 @@ export function SiteFooter({ profile }: { profile: Profile }) {
               <li key={social.label}>
                 <a
                   href={social.href}
-                  className="text-sm text-muted transition-colors hover:text-foreground"
+                  className="label text-muted transition-colors hover:text-accent"
                   target={social.href.startsWith("http") ? "_blank" : undefined}
                   rel={social.href.startsWith("http") ? "noreferrer" : undefined}
                 >

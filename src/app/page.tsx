@@ -1,3 +1,4 @@
+import { ChatWidget } from "@/components/chat-widget";
 import { Hero } from "@/components/hero";
 import { Experience } from "@/components/experience";
 import { Marquee } from "@/components/marquee";
@@ -46,6 +47,9 @@ export default async function Home() {
         <Skills groups={skills} education={education} />
       </main>
       <SiteFooter profile={profile} />
+      <ChatWidget
+        context={{ profile, roles: experience, projects, skills, education }}
+      />
     </>
   );
 }

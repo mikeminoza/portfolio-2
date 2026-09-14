@@ -59,9 +59,9 @@ export type Education = {
  */
 const fallbackProfile: Profile = {
   name: "Mike Arthur Miñoza",
-  title: "Backend Web Developer",
+  title: "Full-Stack Developer",
   intro: [
-    "I build and maintain PHP and Laravel applications on MySQL, and wire their APIs into React, Vue and Next.js frontends.",
+    "I build web applications end to end — Laravel and PHP on the server, React, Vue and Next.js on the front, MySQL and Postgres underneath.",
     "Currently at Glophics, working on Musticker — a Korea-based custom sticker platform preparing for global expansion.",
   ],
   email: "mikearthurminoza@gmail.com",
