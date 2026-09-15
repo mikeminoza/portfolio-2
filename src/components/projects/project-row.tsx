@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useMotionTemplate, useMotionValue } from "motion/react";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import { ProjectBadge } from "@/components/projects/project-badge";
 import {
   ProjectImage,
@@ -17,8 +23,11 @@ export type ProjectRowProps = {
 };
 
 /**
- * One line of the overview: number, title, kind, year, role, stack and a
- * thumbnail. The whole row is a button — detail lives in the modal.
+ * One line of the overview.
+ *
+ * The reveal is choreographed from the section (see `projects-section.tsx`).
+ * The `js-` classes are the handles GSAP targets — they carry no styling, so
+ * the row can be restyled without touching the animation.
  */
 export function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
   const ref = useRef<HTMLLIElement>(null);
@@ -29,10 +38,18 @@ export function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
   const mouseY = useMotionValue(0);
   const spotlight = useMotionTemplate`radial-gradient(20rem circle at ${mouseX}px ${mouseY}px, color-mix(in srgb, var(--accent) 7%, transparent), transparent 70%)`;
 
+  // The thumbnail drifts against the scroll, so the image reads as sitting
+  // behind its frame rather than pasted onto it.
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const imageY = useTransform(scrollYProgress, [0, 1], ["-6%", "6%"]);
+
   return (
     <li
       ref={ref}
-      className="js-row group relative border-t border-border last:border-b"
+      className="js-row group relative last:border-b last:border-border"
       onPointerMove={(event) => {
         if (reduced || event.pointerType !== "mouse") return;
         const rect = ref.current?.getBoundingClientRect();
@@ -41,6 +58,12 @@ export function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
         mouseY.set(event.clientY - rect.top);
       }}
     >
+      {/* Separator as an element rather than a border, so it can draw itself. */}
+      <span
+        aria-hidden
+        className="js-row-rule absolute inset-x-0 top-0 h-px origin-left bg-border"
+      />
+
       {!reduced && (
         <motion.div
           aria-hidden
@@ -53,7 +76,7 @@ export function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
         type="button"
         onClick={onOpen}
         aria-label={`${project.title} — view details`}
-        className="w-full py-7 text-left outline-none focus-visible:bg-surface"
+        className="js-row-body w-full py-7 text-left outline-none focus-visible:bg-surface"
       >
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
@@ -82,14 +105,16 @@ export function ProjectRow({ project, index, onOpen }: ProjectRowProps) {
 
           <div className="flex shrink-0 items-start gap-5">
             {hasProjectImage(project) && (
-              <div className="hidden w-44 overflow-hidden border border-border sm:block">
-                <ProjectImage
-                  project={project}
-                  width={640}
-                  height={400}
-                  sizes="11rem"
-                  className="transition-transform duration-500 group-hover:scale-[1.04]"
-                />
+              <div className="js-row-media hidden w-44 overflow-hidden border border-border sm:block">
+                <motion.div style={reduced ? undefined : { y: imageY }}>
+                  <ProjectImage
+                    project={project}
+                    width={640}
+                    height={400}
+                    sizes="11rem"
+                    className="transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                </motion.div>
               </div>
             )}
 

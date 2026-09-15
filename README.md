@@ -135,10 +135,13 @@ To re-shoot after a redesign, drive a local browser with `playwright-core`
 
 ### Projects: overview vs. modal
 
-The page carries an overview only — number, title, kind badge, year, role and
-stack. The full summary, cover art and links live in `project-modal.tsx`, which
-opens either on a specific project (clicking a row scrolls to it) or on the
-whole list ("View all projects").
+The page carries an overview only, capped at `OVERVIEW_LIMIT` (3) projects —
+number, title, kind badge, year, role and stack. The full list, with summaries,
+cover art and links, lives in `project-modal.tsx`, which opens either on a
+specific project (clicking a row scrolls to it) or on the whole set.
+
+The button counts the full set ("View all 4 projects") whenever some are
+hidden, so the page never quietly truncates without saying so.
 
 The modal stops Lenis on open rather than relying on `overflow: hidden` alone —
 Lenis drives the scroll itself and ignores the overflow lock. Both are applied,
@@ -199,13 +202,33 @@ Only `transform` and `opacity` are animated, so work stays on the compositor.
 | Nav active pill | Motion `layoutId` | Slides between links as sections change |
 | Magnetic buttons | Motion springs | Capped at 14px; mouse pointers only |
 | Section headings | Motion | Same masked rise as the hero, on scroll |
-| Work list rail + rows | GSAP ScrollTrigger | One scrub range for the whole section |
+| Work list rail | GSAP ScrollTrigger | One scrub range for the whole section |
+| Work row reveal | GSAP timeline | Blur-to-sharp lift; rule draws and thumbnail settles alongside |
+| Thumbnail parallax | Motion `useScroll` | Image drifts ±8% against the row |
 | Row spotlight | Motion `useMotionTemplate` | Radial gradient tracks the cursor |
 | Velocity skew | Motion `useVelocity` | Max 2.2°, reads as weight |
 
 Everything autonomous is disabled under `prefers-reduced-motion`; only the
 scroll-linked progress rail stays, because it reports position rather than
 decorating.
+
+The work rows use a blur-to-sharp lift: the row resolves from
+`blur(10px)` with a small rise while the separator rule draws and the
+thumbnail settles down from a slight overshoot. Everything lands together —
+a single short gesture reads faster than parts arriving one after another,
+which is what an internal stagger produces.
+
+The `js-` classes in `project-row.tsx` are GSAP's handles and carry no
+styling, so the row can be restyled without touching the choreography.
+
+Two details worth keeping:
+
+- `clearProps: "filter"` — a filter left on the element keeps a compositing
+  layer alive for the life of the page, so it is dropped once the tween lands.
+- `gsap.from()` rather than `gsap.to()` — if the script never runs, elements
+  stay in their natural visible state instead of stranding hidden content.
+  ScrollTrigger is refreshed once the thumbnails decode, since they change row
+  heights and stale offsets would leave rows revealing at the wrong point.
 
 ### Reduced motion
 

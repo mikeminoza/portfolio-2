@@ -17,6 +17,9 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 /** How far scroll velocity is allowed to lean the list, in degrees. */
 const MAX_SKEW = 1.6;
 
+/** Projects shown on the page. The rest are one click away in the modal. */
+const OVERVIEW_LIMIT = 3;
+
 /**
  * Overview only — title, kind, year and stack. Everything long-form lives in
  * the modal, so the section stays scannable and the page stays short.
@@ -59,18 +62,74 @@ export function ProjectsSection({ projects }: { projects: Project[] }) {
         },
       );
 
+      /*
+       * Blur-to-sharp lift. Everything in the row resolves at once rather
+       * than stepping through a stagger — the blur is what does the work,
+       * and a single short gesture reads faster and less fussy than parts
+       * arriving one after another.
+       */
       gsap.utils.toArray<HTMLElement>(".js-row").forEach((row) => {
-        gsap.from(row, {
-          opacity: 0,
-          y: 40,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "top 88%", once: true },
+        const timeline = gsap.timeline({
+          scrollTrigger: { trigger: row, start: "top 85%", once: true },
         });
+
+        timeline.from(row.querySelector(".js-row-body"), {
+          opacity: 0,
+          y: 26,
+          filter: "blur(10px)",
+          duration: 0.7,
+          ease: "power2.out",
+          // A lingering filter keeps a compositing layer alive for the life
+          // of the page; drop it once the tween lands.
+          clearProps: "filter",
+        });
+
+        timeline.from(
+          row.querySelector(".js-row-rule"),
+          { scaleX: 0, duration: 0.8, ease: "power2.out" },
+          "<",
+        );
+
+        const media = row.querySelector(".js-row-media");
+        if (media) {
+          // Overshoot settling back to rest — the thumbnail lands a beat
+          // after the text, which is what gives the row its weight.
+          timeline.from(
+            media,
+            { scale: 1.12, opacity: 0, duration: 1, ease: "power3.out" },
+            "<0.05",
+          );
+        }
       });
+
+      /*
+       * Thumbnails change row heights as they decode, and ScrollTrigger
+       * caches positions at setup. Without a refresh once they land, rows
+       * reveal against stale offsets — or never reach their trigger at all.
+       */
+      const images = Array.from(root.current?.querySelectorAll("img") ?? []);
+      let pending = images.filter((img) => !img.complete).length;
+
+      if (pending === 0) {
+        ScrollTrigger.refresh();
+      } else {
+        const settle = () => {
+          pending -= 1;
+          if (pending <= 0) ScrollTrigger.refresh();
+        };
+        images
+          .filter((img) => !img.complete)
+          .forEach((img) => {
+            img.addEventListener("load", settle, { once: true });
+            img.addEventListener("error", settle, { once: true });
+          });
+      }
     },
     { scope: root, dependencies: [reduced] },
   );
+
+  const shown = projects.slice(0, OVERVIEW_LIMIT);
+  const hiddenCount = projects.length - shown.length;
 
   const openModal = (slug: string | null) => {
     setFocusedSlug(slug);
@@ -99,7 +158,7 @@ export function ProjectsSection({ projects }: { projects: Project[] }) {
         </div>
 
         <motion.ul className="md:pl-10" style={safe({ skewY })}>
-          {projects.map((project, index) => (
+          {shown.map((project, index) => (
             <ProjectRow
               key={project.slug}
               project={project}
@@ -115,7 +174,9 @@ export function ProjectsSection({ projects }: { projects: Project[] }) {
         arrow="right"
         className="mt-10 md:ml-10"
       >
-        View all projects
+        {hiddenCount > 0
+          ? `View all ${projects.length} projects`
+          : "View all projects"}
       </ActionButton>
 
       <ProjectModal
