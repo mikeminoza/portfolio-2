@@ -1,12 +1,12 @@
-import { ChatWidget } from "@/components/chat-widget";
-import { Hero } from "@/components/hero";
-import { Experience } from "@/components/experience";
-import { Marquee } from "@/components/marquee";
-import { Projects } from "@/components/projects";
-import { ScrollProgress } from "@/components/scroll-progress";
-import { Skills } from "@/components/skills";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { ChatWidget } from "@/components/chat/chat-widget";
+import { Hero } from "@/components/sections/hero";
+import { Experience } from "@/components/sections/experience";
+import { Marquee } from "@/components/motion/marquee";
+import { ProjectsSection } from "@/components/projects/projects-section";
+import { ScrollProgress } from "@/components/motion/scroll-progress";
+import { Skills } from "@/components/sections/skills";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooter } from "@/components/layout/site-footer";
 import {
   getEducation,
   getExperience,
@@ -43,7 +43,7 @@ export default async function Home() {
         <Hero profile={profile} />
         {marqueeItems.length > 0 && <Marquee items={marqueeItems} />}
         <Experience roles={experience} />
-        <Projects projects={projects} />
+        <ProjectsSection projects={projects} />
         <Skills groups={skills} education={education} />
       </main>
       <SiteFooter profile={profile} />

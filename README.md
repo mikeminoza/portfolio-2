@@ -19,20 +19,19 @@ src/
     page.tsx          composes the sections, reads from lib/content
     globals.css       theme tokens (light + .dark), Lenis styles, reduced-motion reset
   components/
-    providers.tsx        ThemeProvider + Lenis, driven off GSAP's ticker
-    hero.tsx             scroll-linked parallax hero (Motion)
-    experience.tsx       roles with sticky date rail
-    projects.tsx         work list: ScrollTrigger rail, spotlight, velocity skew
-    skills.tsx           skill groups + education
-    marquee.tsx          scroll-reactive tech strip
-    scroll-progress.tsx  reading-progress rail
-    magnetic.tsx         cursor-following wrapper for buttons
-    section-heading.tsx  masked word reveal on scroll
-    reveal.tsx           <Reveal> / <RevealGroup> scroll entrances
-    split-text.tsx       word-by-word text reveal
-    site-header.tsx      fixed nav, active-section pill
-    site-footer.tsx      contact
-    theme-toggle.tsx     light/dark switch
+    ui/          primitives: Tag, ActionLink/ActionButton, InlineLink
+    motion/      Reveal, SplitText, Magnetic, Marquee, ScrollProgress
+    layout/      SiteHeader, SiteFooter, SectionHeading, ThemeToggle, Providers
+    sections/    Hero, Experience, Skills
+    projects/    ProjectsSection, ProjectRow, ProjectModal, ProjectImage, ProjectBadge
+    chat/        ChatWidget, ChatBubble
+  hooks/
+    use-escape-key.ts      dismiss-on-Escape for overlays
+    use-focus-trap.ts      Tab containment + initial focus
+    use-scroll-lock.ts     Lenis stop + overflow lock
+    use-motion-safe.ts     safe() wrapper for reduced motion
+    use-active-section.ts  IntersectionObserver section tracking
+    use-hydrated.ts        SSR-safe "has hydrated"
   lib/
     content.ts           ← content source of truth, the CMS swap point
     motion.ts            shared variants and easing
@@ -40,6 +39,26 @@ src/
     use-hydrated.ts      SSR-safe "has hydrated" hook
     use-active-section.ts  IntersectionObserver section tracking
 ```
+
+## Component conventions
+
+Components are grouped by role, not dumped in one folder: `ui/` holds
+styling primitives, `motion/` the animation wrappers, `layout/` the page
+chrome, and `sections/`, `projects/` and `chat/` the features.
+
+Three rules keep it from drifting back:
+
+- **Don't hand-roll a chip or a button.** `Tag`, `ActionLink`/`ActionButton`
+  and `InlineLink` exist because the same class strings had been copied into
+  six files with slightly different padding each time.
+- **Stacking order lives in `lib/z-layers.ts`**, not as bare `z-[70]`
+  literals. The file lists the layers bottom to top.
+- **Reduced motion goes through `useMotionSafe()`.** `safe(props)` returns
+  `undefined` when the visitor asked for less motion, which is what Motion
+  needs to skip an animation rather than run it at zero duration.
+
+Overlay behaviour (Escape, focus trapping, scroll locking) is in hooks, so
+the modal and the assistant cannot drift apart.
 
 ## Design system
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
-import { Providers } from "@/components/providers";
+import { Providers } from "@/components/layout/providers";
 import "./globals.css";
 
 /** Tight grotesk for display and prose. */

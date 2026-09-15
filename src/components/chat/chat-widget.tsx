@@ -1,20 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { ChatBubble, type ChatMessage } from "@/components/chat/chat-message";
+import { useEscapeKey } from "@/hooks/use-escape-key";
+import { useMotionSafe } from "@/hooks/use-motion-safe";
 import { answer, OPENING_SUGGESTIONS, type ChatContext } from "@/lib/chat";
+import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { Z } from "@/lib/z-layers";
 
-type Message = {
-  id: number;
-  from: "visitor" | "site";
-  text: string;
-  suggestions?: string[];
-};
+/** A beat before replying reads as considered; instant reads as canned. */
+const REPLY_DELAY_MS = 380;
 
 /**
  * Floating assistant. Answers come from `lib/chat.ts`, which reads the same
- * content the page renders — so it can't contradict the CV.
+ * content the page renders — so it cannot contradict the CV.
  *
  * It is scripted, not a language model, and the header says so. Letting a
  * visitor believe otherwise would be the wrong kind of surprise.
@@ -23,16 +24,23 @@ export function ChatWidget({ context }: { context: ChatContext }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [thinking, setThinking] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  const reduced = useReducedMotion();
+  const { reduced, safe } = useMotionSafe();
   const nextId = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const push = useCallback((message: Omit<Message, "id">) => {
+  const close = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  useEscapeKey(open, close);
+
+  const push = useCallback((message: Omit<ChatMessage, "id">) => {
     setMessages((prev) => [...prev, { ...message, id: nextId.current++ }]);
   }, []);
 
@@ -46,13 +54,16 @@ export function ChatWidget({ context }: { context: ChatContext }) {
       setThinking(true);
 
       const reply = answer(trimmed, context);
-      // A beat before replying reads as considered; instant reads as canned.
       const timer = setTimeout(
         () => {
           setThinking(false);
-          push({ from: "site", text: reply.text, suggestions: reply.suggestions });
+          push({
+            from: "site",
+            text: reply.text,
+            suggestions: reply.suggestions,
+          });
         },
-        reduced ? 0 : 380,
+        reduced ? 0 : REPLY_DELAY_MS,
       );
       timers.current.push(timer);
     },
@@ -69,7 +80,6 @@ export function ChatWidget({ context }: { context: ChatContext }) {
     });
   }, [open, messages.length, push, context.profile.name]);
 
-  // Focus the field when the panel opens.
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -79,19 +89,6 @@ export function ChatWidget({ context }: { context: ChatContext }) {
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
   }, [messages, thinking]);
-
-  // Escape closes and returns focus to the trigger.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
 
   // Don't fire a reply into an unmounted tree.
   useEffect(() => {
@@ -104,17 +101,20 @@ export function ChatWidget({ context }: { context: ChatContext }) {
       <AnimatePresence>
         {open && (
           <motion.div
-            key="panel"
+            key="assistant-panel"
             role="dialog"
             aria-label="Ask about this portfolio"
-            initial={reduced ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
-            animate={reduced ? undefined : { opacity: 1, y: 0, scale: 1 }}
-            exit={reduced ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            initial={safe({ opacity: 0, y: 12, scale: 0.98 })}
+            animate={safe({ opacity: 1, y: 0, scale: 1 })}
+            exit={safe({ opacity: 0, y: 12, scale: 0.98 })}
+            transition={{ duration: 0.22, ease }}
             style={{ transformOrigin: "bottom right" }}
-            className="fixed bottom-20 right-4 z-[70] flex h-[min(32rem,70svh)] w-[min(23rem,calc(100vw-2rem))] flex-col border border-border bg-background shadow-2xl md:bottom-24 md:right-8"
+            className={cn(
+              "fixed bottom-20 right-4 flex h-[min(32rem,70svh)] w-[min(23rem,calc(100vw-2rem))] flex-col border border-border bg-background shadow-2xl md:bottom-24 md:right-8",
+              Z.assistant,
+            )}
           >
-            <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
               <div>
                 <p className="label text-foreground">
                   <span className="text-accent">?</span>
@@ -127,10 +127,7 @@ export function ChatWidget({ context }: { context: ChatContext }) {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setOpen(false);
-                  triggerRef.current?.focus();
-                }}
+                onClick={close}
                 aria-label="Close"
                 className="grid size-7 shrink-0 place-items-center border border-border text-muted transition-colors hover:border-accent hover:text-accent"
               >
@@ -138,8 +135,8 @@ export function ChatWidget({ context }: { context: ChatContext }) {
               </button>
             </header>
 
-            {/* Same reason as the project modal: Lenis cancels wheel events
-                at the root, so this log needs an explicit opt-out to scroll. */}
+            {/* Lenis cancels wheel events at the root, so this log needs an
+                explicit opt-out to scroll. Same reason as the project modal. */}
             <div
               ref={logRef}
               data-lenis-prevent
@@ -148,13 +145,9 @@ export function ChatWidget({ context }: { context: ChatContext }) {
               className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4"
             >
               {messages.map((message) => (
-                <Bubble key={message.id} message={message} onAsk={ask} />
+                <ChatBubble key={message.id} message={message} onAsk={ask} />
               ))}
-              {thinking && (
-                <p className="label text-muted" aria-hidden>
-                  <Dots />
-                </p>
-              )}
+              {thinking && <TypingDots />}
             </div>
 
             <form
@@ -162,7 +155,7 @@ export function ChatWidget({ context }: { context: ChatContext }) {
                 event.preventDefault();
                 ask(draft);
               }}
-              className="flex items-center gap-2 border-t border-border p-3"
+              className="flex shrink-0 items-center gap-2 border-t border-border p-3"
             >
               <input
                 ref={inputRef}
@@ -188,15 +181,16 @@ export function ChatWidget({ context }: { context: ChatContext }) {
       <motion.button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? "Close assistant" : "Ask about this portfolio"}
-        initial={reduced ? undefined : { opacity: 0, scale: 0.8 }}
-        animate={reduced ? undefined : { opacity: 1, scale: 1 }}
+        initial={safe({ opacity: 0, scale: 0.8 })}
+        animate={safe({ opacity: 1, scale: 1 })}
         transition={{ duration: 0.4, delay: 1.6 }}
-        whileHover={reduced ? undefined : { y: -2 }}
+        whileHover={safe({ y: -2 })}
         className={cn(
-          "label fixed bottom-4 right-4 z-[70] flex items-center gap-2 border px-4 py-3 transition-colors md:bottom-8 md:right-8",
+          "label fixed bottom-4 right-4 flex items-center gap-2 border px-4 py-3 transition-colors md:bottom-8 md:right-8",
+          Z.assistant,
           open
             ? "border-accent bg-background text-accent"
             : "border-foreground bg-foreground text-background hover:border-accent hover:bg-accent",
@@ -211,96 +205,19 @@ export function ChatWidget({ context }: { context: ChatContext }) {
   );
 }
 
-function Bubble({
-  message,
-  onAsk,
-}: {
-  message: Message;
-  onAsk: (question: string) => void;
-}) {
-  const fromVisitor = message.from === "visitor";
-
+function TypingDots() {
   return (
-    <div className={cn("flex flex-col gap-2", fromVisitor && "items-end")}>
-      <div
-        className={cn(
-          "max-w-[85%] border px-3 py-2 text-sm leading-relaxed",
-          fromVisitor
-            ? "border-accent/40 bg-surface text-foreground"
-            : "border-border text-muted",
-        )}
-      >
-        {message.text.split("\n\n").map((paragraph, i) => (
-          // Single newlines are meaningful here (one social link per line),
-          // so they render as breaks rather than collapsing to spaces.
-          <p key={i} className={cn("whitespace-pre-line", i > 0 && "mt-2")}>
-            {linkify(paragraph)}
-          </p>
+    <p className="label text-muted" aria-hidden>
+      <span className="inline-flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="size-1 rounded-full bg-accent"
+            animate={{ opacity: [0.25, 1, 0.25] }}
+            transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.15 }}
+          />
         ))}
-      </div>
-
-      {message.suggestions && message.suggestions.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {message.suggestions.map((suggestion) => (
-            <li key={suggestion}>
-              <button
-                type="button"
-                onClick={() => onAsk(suggestion)}
-                className="border border-border px-2 py-1 font-mono text-[11px] text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                {suggestion}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-/** Turn bare URLs in an answer into real links. */
-function linkify(text: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g);
-
-  return parts.map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noreferrer"
-        className="break-all text-accent underline underline-offset-2"
-      >
-        {prettyUrl(part)}
-      </a>
-    ) : (
-      part
-    ),
-  );
-}
-
-/** Display form of a URL: scheme dropped, percent-escapes decoded. */
-function prettyUrl(url: string) {
-  const bare = url.replace(/^https?:\/\//, "");
-  try {
-    return decodeURI(bare);
-  } catch {
-    // Malformed escapes make decodeURI throw; the raw form still reads fine.
-    return bare;
-  }
-}
-
-function Dots() {
-  return (
-    <span className="inline-flex gap-1">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="size-1 rounded-full bg-accent"
-          animate={{ opacity: [0.25, 1, 0.25] }}
-          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.15 }}
-        />
-      ))}
-    </span>
+      </span>
+    </p>
   );
 }

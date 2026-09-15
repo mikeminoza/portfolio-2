@@ -1,5 +1,6 @@
-import { Reveal } from "@/components/reveal";
-import { SectionHeading } from "@/components/section-heading";
+import { Reveal } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/layout/section-heading";
+import { InlineLink } from "@/components/ui/inline-link";
 import type { Profile } from "@/lib/content";
 
 export function SiteFooter({ profile }: { profile: Profile }) {
@@ -17,18 +18,14 @@ export function SiteFooter({ profile }: { profile: Profile }) {
           Open to new opportunities.
         </h3>
 
-        <a
+        <InlineLink
           href={`mailto:${profile.email}`}
-          className="group mt-10 inline-flex items-center gap-4 border-b border-border pb-2 text-lg text-muted transition-colors hover:border-accent hover:text-accent md:text-2xl"
+          arrow="right"
+          size="lg"
+          className="mt-10"
         >
           {profile.email}
-          <span
-            aria-hidden
-            className="transition-transform duration-300 group-hover:translate-x-1"
-          >
-            →
-          </span>
-        </a>
+        </InlineLink>
 
         <div className="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-border pt-6">
           <p className="label text-muted/70">

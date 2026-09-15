@@ -1,5 +1,5 @@
-import { Reveal, RevealGroup } from "@/components/reveal";
-import { SectionHeading } from "@/components/section-heading";
+import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { riseIn } from "@/lib/motion";
 import type { Role } from "@/lib/content";
 

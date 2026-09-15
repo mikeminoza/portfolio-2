@@ -1,15 +1,17 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "motion/react";
-import { SplitText } from "@/components/split-text";
-import { Magnetic } from "@/components/magnetic";
+import { motion, useScroll, useTransform } from "motion/react";
+import { SplitText } from "@/components/motion/split-text";
+import { Magnetic } from "@/components/motion/magnetic";
+import { ActionLink } from "@/components/ui/action";
+import { useMotionSafe } from "@/hooks/use-motion-safe";
 import { ease } from "@/lib/motion";
 import type { Profile } from "@/lib/content";
 
 export function Hero({ profile }: { profile: Profile }) {
   const ref = useRef<HTMLElement>(null);
-  const reduced = useReducedMotion();
+  const { safe } = useMotionSafe();
 
   // Scroll-linked parallax: the hero drifts up and dims as you leave it.
   const { scrollYProgress } = useScroll({
@@ -19,8 +21,6 @@ export function Hero({ profile }: { profile: Profile }) {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "22%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  const style = reduced ? undefined : { y, opacity };
-
   return (
     <section
       ref={ref}
@@ -28,10 +28,13 @@ export function Hero({ profile }: { profile: Profile }) {
     >
       <Backdrop />
 
-      <motion.div style={style} className="relative mx-auto w-full max-w-5xl">
+      <motion.div
+        style={safe({ y, opacity })}
+        className="relative mx-auto w-full max-w-5xl"
+      >
         <motion.div
-          initial={reduced ? undefined : { opacity: 0 }}
-          animate={reduced ? undefined : { opacity: 1 }}
+          initial={safe({ opacity: 0 })}
+          animate={safe({ opacity: 1 })}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
           <div className="h-px w-full bg-border" />
@@ -57,8 +60,8 @@ export function Hero({ profile }: { profile: Profile }) {
           {profile.intro.map((paragraph, i) => (
             <motion.p
               key={i}
-              initial={reduced ? undefined : { opacity: 0, y: 12 }}
-              animate={reduced ? undefined : { opacity: 1, y: 0 }}
+              initial={safe({ opacity: 0, y: 12 })}
+              animate={safe({ opacity: 1, y: 0 })}
               transition={{ duration: 0.7, ease, delay: 1 + i * 0.1 }}
               className="text-pretty leading-relaxed text-muted md:text-lg"
             >
@@ -68,32 +71,18 @@ export function Hero({ profile }: { profile: Profile }) {
         </div>
 
         <motion.div
-          initial={reduced ? undefined : { opacity: 0, y: 12 }}
-          animate={reduced ? undefined : { opacity: 1, y: 0 }}
+          initial={safe({ opacity: 0, y: 12 })}
+          animate={safe({ opacity: 1, y: 0 })}
           transition={{ duration: 0.7, ease, delay: 1.25 }}
           className="mt-10 flex flex-wrap items-center gap-3"
         >
           <Magnetic>
-            <a
-              href="#work"
-              className="group label inline-flex items-center gap-3 bg-foreground px-6 py-3.5 text-background"
-            >
+            <ActionLink href="#work" variant="solid" arrow="right">
               See the work
-              <span
-                aria-hidden
-                className="transition-transform duration-300 group-hover:translate-x-1"
-              >
-                →
-              </span>
-            </a>
+            </ActionLink>
           </Magnetic>
           <Magnetic>
-            <a
-              href={`mailto:${profile.email}`}
-              className="label inline-block border border-border px-6 py-3.5 text-muted transition-colors hover:border-accent hover:text-accent"
-            >
-              Get in touch
-            </a>
+            <ActionLink href={`mailto:${profile.email}`}>Get in touch</ActionLink>
           </Magnetic>
         </motion.div>
       </motion.div>
@@ -118,7 +107,7 @@ function Backdrop() {
 }
 
 function ScrollHint() {
-  const reduced = useReducedMotion();
+  const { safe } = useMotionSafe();
 
   return (
     <motion.div
@@ -131,7 +120,7 @@ function ScrollHint() {
       <span className="label text-muted">Scroll</span>
       <motion.span
         className="block h-px w-12 bg-muted"
-        animate={reduced ? undefined : { scaleX: [1, 0.35, 1] }}
+        animate={safe({ scaleX: [1, 0.35, 1] })}
         style={{ transformOrigin: "left" }}
         transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
       />

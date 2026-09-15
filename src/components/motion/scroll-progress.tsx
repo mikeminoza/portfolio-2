@@ -1,6 +1,8 @@
 "use client";
 
 import { motion, useScroll, useSpring } from "motion/react";
+import { Z } from "@/lib/z-layers";
+import { cn } from "@/lib/utils";
 
 /**
  * Reading-progress rail pinned to the top of the viewport.
@@ -21,7 +23,7 @@ export function ScrollProgress() {
     <motion.div
       aria-hidden
       style={{ scaleX }}
-      className="fixed inset-x-0 top-0 z-[60] h-px origin-left bg-accent"
+      className={cn("fixed inset-x-0 top-0 h-px origin-left bg-accent", Z.progress)}
     />
   );
 }

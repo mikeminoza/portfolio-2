@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
-import { useHydrated } from "@/lib/use-hydrated";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();

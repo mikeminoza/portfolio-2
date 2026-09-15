@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { Tag } from "@/components/ui/tag";
 import type { ProjectKind } from "@/lib/content";
 
 const LABELS: Record<ProjectKind, string> = {
@@ -11,24 +11,14 @@ const LABELS: Record<ProjectKind, string> = {
  * time. Professional work carries the accent; personal work stays neutral,
  * so the eye lands on the paid work first without the page shouting.
  */
-export function ProjectBadge({
-  kind,
-  className,
-}: {
-  kind: ProjectKind;
-  className?: string;
-}) {
+export function ProjectBadge({ kind }: { kind: ProjectKind }) {
   return (
-    <span
-      className={cn(
-        "label shrink-0 whitespace-nowrap border px-2 py-0.5",
-        kind === "professional"
-          ? "border-accent text-accent"
-          : "border-border text-muted",
-        className,
-      )}
+    <Tag
+      size="sm"
+      treatment="label"
+      tone={kind === "professional" ? "accent" : "muted"}
     >
       {LABELS[kind]}
-    </span>
+    </Tag>
   );
 }

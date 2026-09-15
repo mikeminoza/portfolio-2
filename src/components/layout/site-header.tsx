@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  motion,
-  useScroll,
-  useMotionValueEvent,
-  useReducedMotion,
-} from "motion/react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { useActiveSection } from "@/lib/use-active-section";
+import { motion, useScroll, useMotionValueEvent } from "motion/react";
+import { useMotionSafe } from "@/hooks/use-motion-safe";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
+import { Z } from "@/lib/z-layers";
 
 const links = [
   { label: "Experience", id: "experience" },
@@ -24,7 +21,7 @@ export function SiteHeader({ name }: { name: string }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const active = useActiveSection(ids);
-  const reduced = useReducedMotion();
+  const { safe } = useMotionSafe();
 
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
@@ -41,7 +38,8 @@ export function SiteHeader({ name }: { name: string }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.1 }}
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+        "fixed inset-x-0 top-0 transition-all duration-300",
+        Z.header,
         scrolled && "border-b border-border bg-background/80 backdrop-blur-md",
       )}
     >
@@ -72,7 +70,7 @@ export function SiteHeader({ name }: { name: string }) {
                         behind them — an underline suits the rules elsewhere. */}
                     {isActive && (
                       <motion.span
-                        layoutId={reduced ? undefined : "nav-marker"}
+                        layoutId={safe("nav-marker")}
                         className="absolute -bottom-0.5 left-0 h-px w-full bg-accent"
                         transition={{
                           type: "spring",

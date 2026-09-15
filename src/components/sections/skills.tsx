@@ -1,5 +1,6 @@
-import { Reveal, RevealGroup } from "@/components/reveal";
-import { SectionHeading } from "@/components/section-heading";
+import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { SectionHeading } from "@/components/layout/section-heading";
+import { Tag } from "@/components/ui/tag";
 import { riseIn } from "@/lib/motion";
 import type { Education, SkillGroup } from "@/lib/content";
 
@@ -27,11 +28,8 @@ export function Skills({
             <h3 className="label text-muted">{group.title}</h3>
             <ul className="flex flex-wrap gap-2">
               {group.items.map((item) => (
-                <li
-                  key={item}
-                  className="border border-border px-2.5 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent"
-                >
-                  {item}
+                <li key={item}>
+                  <Tag interactive>{item}</Tag>
                 </li>
               ))}
             </ul>
@@ -47,9 +45,9 @@ export function Skills({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <p className="text-lg font-medium">{education.degree}</p>
             {education.honors && (
-              <span className="label shrink-0 whitespace-nowrap border border-accent px-2 py-1 text-accent">
+              <Tag size="sm" treatment="label" tone="accent">
                 {education.honors}
-              </span>
+              </Tag>
             )}
           </div>
           <p className="mt-2 text-muted">{education.school}</p>

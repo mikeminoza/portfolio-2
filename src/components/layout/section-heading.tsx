@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useMotionSafe } from "@/hooks/use-motion-safe";
 import { ease } from "@/lib/motion";
 
 /**
@@ -21,23 +22,23 @@ export function SectionHeading({
   /** Right-aligned detail, e.g. "02 entries". */
   meta?: string;
 }) {
-  const reduced = useReducedMotion();
+  const { safe } = useMotionSafe();
 
   return (
     <header className="mb-12 md:mb-16">
       <motion.div
         aria-hidden
         className="h-px w-full origin-left bg-accent"
-        initial={reduced ? undefined : { scaleX: 0 }}
-        whileInView={reduced ? undefined : { scaleX: 1 }}
+        initial={safe({ scaleX: 0 })}
+        whileInView={safe({ scaleX: 1 })}
         viewport={{ once: true, amount: "some" }}
         transition={{ duration: 0.9, ease }}
       />
 
       <motion.div
         className="mt-4 flex items-baseline justify-between gap-6"
-        initial={reduced ? undefined : { opacity: 0, y: 8 }}
-        whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
+        initial={safe({ opacity: 0, y: 8 })}
+        whileInView={safe({ opacity: 1, y: 0 })}
         viewport={{ once: true, amount: "some" }}
         transition={{ duration: 0.6, ease, delay: 0.15 }}
       >
