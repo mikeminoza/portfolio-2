@@ -22,7 +22,7 @@ type ActionLinkProps = CommonProps & {
 };
 
 type ActionButtonProps = CommonProps & {
-  onClick: () => void;
+  onClick?: () => void;
   type?: "button" | "submit";
   "aria-expanded"?: boolean;
   "aria-label"?: string;

@@ -153,6 +153,65 @@ cancels wheel events at the root — including while stopped — so without it a
 nested `overflow-y: auto` list silently refuses to scroll. Both the project
 modal and the assistant's message log carry it.
 
+## Code challenge
+
+A LeetCode-style editor at `04 / CHALLENGE`: pick a language and difficulty,
+solve the problem, run it against test cases.
+
+### Where the code runs
+
+In the visitor's own browser, in a Web Worker. Nothing is uploaded, there is
+no execution server, and an infinite loop costs a terminated worker rather
+than a deploy. That property is what makes it safe to put on a public page.
+
+- **JavaScript** — `public/workers/js-runner.js`, a classic worker.
+- **Python** — `public/workers/python-runner.js`, a **module** worker that
+  dynamically imports Pyodide (CPython on WebAssembly) from the CDN.
+
+The module part is not a style choice. Pyodide 314 refuses to initialise in a
+classic worker (`Classic web workers are not supported`), so `importScripts`
+of `pyodide.js` cannot work at all — the ESM build behind a dynamic `import()`
+is the supported path. The runtime is several megabytes, so it loads on first
+use and the worker is kept alive between runs; the UI says it is warming up.
+
+Both workers are real files rather than blob URLs, since a module worker needs
+a proper origin.
+
+### Where the problems come from
+
+`GET /api/challenge?difficulty=…` generates one with Claude and falls back to
+the nine bundled problems in `lib/challenge/problems.ts` whenever it can't.
+
+**A generated problem is proved before it is served.** A model will sometimes
+produce a problem whose expected values are wrong, and shipping that means a
+visitor writes a correct solution and is told it failed — worse than having no
+AI at all. So the model also returns a reference solution, which is executed
+against its own test cases in `node:vm`; anything that can't pass its own
+tests is discarded for a curated one.
+
+Cost is bounded by construction. Generated problems are pooled three-per-
+difficulty for 30 minutes, and concurrent requests share one in-flight call, so
+traffic does not multiply spend — at most three calls per difficulty per
+window however many people visit. Three is also the smallest pool that makes
+Shuffle feel random; a single cached problem would return the same thing for
+the whole window. Set `ANTHROPIC_API_KEY` to enable it — without the key the
+endpoint quietly serves bundled problems and the feature works unchanged.
+
+The caller passes the slug it already has as `exclude`, so Shuffle moves on
+rather than handing back the problem already on screen.
+
+### Hydration
+
+The first render must be deterministic: `firstProblem()` is used for initial
+state, never `randomProblem()`. Rolling at random during render has the server
+and the client pick different problems and hydration fails. Randomisation
+happens on interaction, which also means a page view never bills a
+generation.
+
+Every bundled problem returns a scalar or a fully ordered array so the harness
+can compare with plain deep equality, and comparison is numerically tolerant
+so Python's `2.0` matches JavaScript's `2`.
+
 ## Assistant
 
 A floating widget (bottom right) that answers questions about the CV.

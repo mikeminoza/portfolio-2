@@ -9,7 +9,7 @@ export function SiteFooter({ profile }: { profile: Profile }) {
       id="contact"
       className="mx-auto max-w-5xl scroll-mt-24 px-6 py-20 md:px-10 md:py-28"
     >
-      <SectionHeading index={4} meta={profile.location}>
+      <SectionHeading index={5} meta={profile.location}>
         Contact
       </SectionHeading>
 

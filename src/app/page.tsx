@@ -1,5 +1,6 @@
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { Hero } from "@/components/sections/hero";
+import { ChallengeSection } from "@/components/challenge/challenge-section";
 import { Experience } from "@/components/sections/experience";
 import { Marquee } from "@/components/motion/marquee";
 import { ProjectsSection } from "@/components/projects/projects-section";
@@ -45,6 +46,7 @@ export default async function Home() {
         <Experience roles={experience} />
         <ProjectsSection projects={projects} />
         <Skills groups={skills} education={education} />
+        <ChallengeSection />
       </main>
       <SiteFooter profile={profile} />
       <ChatWidget
