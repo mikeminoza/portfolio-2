@@ -99,6 +99,38 @@ Tight headings against loose structure is the whole idea, so it lives in
 - The hero sits on a faint 72px engineering grid, masked to a soft pool,
   instead of the usual blurred colour blob.
 
+### Project images
+
+Screenshots of the live deployments live in `public/projects/`, captured at
+1440x900 and encoded as JPEG (~120KB each). `project-image.tsx` resolves the
+source: a Sanity `cover` wins when set (hotspot-aware crops via the CDN),
+otherwise the checked-in screenshot is used, and nothing renders when neither
+exists — so no empty bordered frames.
+
+MedNexus has no image: it is a capstone with no public deployment to shoot.
+Drop a file at `public/projects/mednexus.jpg` and add a `staticCover` entry to
+give it one.
+
+To re-shoot after a redesign, drive a local browser with `playwright-core`
+(no Chromium download needed — it attaches to installed Edge or Chrome).
+
+### Projects: overview vs. modal
+
+The page carries an overview only — number, title, kind badge, year, role and
+stack. The full summary, cover art and links live in `project-modal.tsx`, which
+opens either on a specific project (clicking a row scrolls to it) or on the
+whole list ("View all projects").
+
+The modal stops Lenis on open rather than relying on `overflow: hidden` alone —
+Lenis drives the scroll itself and ignores the overflow lock. Both are applied,
+because under reduced motion Lenis is never mounted and the overflow lock is
+the one doing the work.
+
+Any scroll container nested inside the page needs `data-lenis-prevent`. Lenis
+cancels wheel events at the root — including while stopped — so without it a
+nested `overflow-y: auto` list silently refuses to scroll. Both the project
+modal and the assistant's message log carry it.
+
 ## Assistant
 
 A floating widget (bottom right) that answers questions about the CV.
@@ -184,7 +216,10 @@ and `/studio` shows a setup notice instead of crashing.
 
 - **Profile** — singleton: name, role, intro paragraphs, email, location, socials.
 - **Experience** — company, job title, period, employment type, highlights, sort order.
-- **Project** — title, slug, summary, cover image, year, role, stack, URL, sort order.
+- **Project** — title, slug, summary, cover image, year, role, kind, stack,
+  repo + demo URLs, sort order. `kind` is `professional` or `personal` and
+  drives the badge; it defaults to `personal`, since claiming employer work
+  that isn't his is the worse failure.
 - **Skill group** — title, items, sort order.
 - **Education** — singleton: degree, school, period, honours.
 

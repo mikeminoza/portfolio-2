@@ -124,7 +124,7 @@ function projectAnswer(ctx: ChatContext, project: Project): ChatAnswer {
 
   return {
     text: [
-      `${project.title} (${project.year}, ${project.role}).`,
+      `${project.title} — ${project.kind === "professional" ? "professional work" : "a personal project"} (${project.year}, ${project.role}).`,
       project.summary,
       `Built with ${list(project.stack)}.`,
       links.join("  ·  "),

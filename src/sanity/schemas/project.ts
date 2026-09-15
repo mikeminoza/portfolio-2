@@ -51,6 +51,21 @@ export const project = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "kind",
+      title: "Project kind",
+      type: "string",
+      description: "Shipped for an employer or client, or built on his own time.",
+      options: {
+        list: [
+          { title: "Professional", value: "professional" },
+          { title: "Personal", value: "personal" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "personal",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "stack",
       type: "array",
       of: [{ type: "string" }],

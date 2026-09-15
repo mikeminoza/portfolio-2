@@ -28,6 +28,7 @@ export const projectsQuery = defineQuery(`
     summary,
     year,
     role,
+    kind,
     stack,
     repo,
     demo,

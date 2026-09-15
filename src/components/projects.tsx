@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import Image from "next/image";
+import { useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -16,19 +15,23 @@ import {
   useReducedMotion,
 } from "motion/react";
 import { SectionHeading } from "@/components/section-heading";
-import { urlFor } from "@/sanity/client";
+import { ProjectBadge } from "@/components/project-badge";
+import { ProjectImage, hasProjectImage } from "@/components/project-image";
+import { ProjectModal } from "@/components/project-modal";
 import type { Project } from "@/lib/content";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /**
- * GSAP-driven section. Motion handles the simple entrances elsewhere; this
- * one uses ScrollTrigger because the rows and the progress rail need to be
- * choreographed against a single scroll range.
+ * Overview only — title, kind, year and stack. Everything long-form lives in
+ * the modal, so the section stays scannable and the page stays short.
  */
 export function Projects({ projects }: { projects: Project[] }) {
   const root = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
+
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Scroll velocity leans the list very slightly, which reads as weight.
   const { scrollY } = useScroll();
@@ -42,7 +45,6 @@ export function Projects({ projects }: { projects: Project[] }) {
     () => {
       if (reduced) return;
 
-      // The rail draws down as the section scrolls through.
       gsap.fromTo(
         ".js-rail",
         { scaleY: 0 },
@@ -58,19 +60,23 @@ export function Projects({ projects }: { projects: Project[] }) {
         },
       );
 
-      // Each row rises as it enters.
       gsap.utils.toArray<HTMLElement>(".js-row").forEach((row) => {
         gsap.from(row, {
           opacity: 0,
           y: 40,
           duration: 0.9,
           ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "top 85%", once: true },
+          scrollTrigger: { trigger: row, start: "top 88%", once: true },
         });
       });
     },
     { scope: root, dependencies: [reduced] },
   );
+
+  const open = (slug: string | null) => {
+    setOpenSlug(slug);
+    setIsOpen(true);
+  };
 
   return (
     <section
@@ -80,7 +86,7 @@ export function Projects({ projects }: { projects: Project[] }) {
     >
       <SectionHeading
         index={2}
-        meta={`${String(projects.length).padStart(2, "0")} selected`}
+        meta={`${String(projects.length).padStart(2, "0")} total`}
       >
         Work
       </SectionHeading>
@@ -93,17 +99,51 @@ export function Projects({ projects }: { projects: Project[] }) {
           <div className="js-rail h-full w-px origin-top bg-accent" />
         </div>
 
-        <motion.ol className="md:pl-10" style={reduced ? undefined : { skewY }}>
+        <motion.ul className="md:pl-10" style={reduced ? undefined : { skewY }}>
           {projects.map((project, i) => (
-            <ProjectRow key={project.slug} project={project} index={i} />
+            <ProjectRow
+              key={project.slug}
+              project={project}
+              index={i}
+              onOpen={() => open(project.slug)}
+            />
           ))}
-        </motion.ol>
+        </motion.ul>
       </div>
+
+      <button
+        type="button"
+        onClick={() => open(null)}
+        className="group label mt-10 inline-flex items-center gap-3 border border-border px-6 py-3.5 text-muted transition-colors hover:border-accent hover:text-accent md:ml-10"
+      >
+        View all projects
+        <span
+          aria-hidden
+          className="transition-transform duration-300 group-hover:translate-x-1"
+        >
+          →
+        </span>
+      </button>
+
+      <ProjectModal
+        projects={projects}
+        open={isOpen}
+        focused={openSlug}
+        onClose={() => setIsOpen(false)}
+      />
     </section>
   );
 }
 
-function ProjectRow({ project, index }: { project: Project; index: number }) {
+function ProjectRow({
+  project,
+  index,
+  onOpen,
+}: {
+  project: Project;
+  index: number;
+  onOpen: () => void;
+}) {
   const ref = useRef<HTMLLIElement>(null);
   const reduced = useReducedMotion();
 
@@ -115,7 +155,7 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
   return (
     <li
       ref={ref}
-      className="js-row group relative border-t border-border py-10 last:border-b"
+      className="js-row group relative border-t border-border last:border-b"
       onPointerMove={(event) => {
         if (reduced || event.pointerType !== "mouse") return;
         const rect = ref.current?.getBoundingClientRect();
@@ -132,76 +172,59 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
         />
       )}
 
-      <article className="grid gap-x-10 gap-y-6 md:grid-cols-[1fr_14rem] md:items-start">
-        <div>
-          <div className="label flex items-center gap-3 text-muted">
-            <span className="text-accent">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <span aria-hidden className="h-px w-5 bg-border" />
-            <span>{project.year}</span>
-            <span aria-hidden>·</span>
-            <span>{project.role}</span>
-          </div>
-
-          <h3 className="mt-4 text-3xl font-medium transition-colors duration-300 group-hover:text-accent md:text-4xl">
-            {project.title}
-          </h3>
-
-          <p className="mt-4 max-w-xl text-pretty leading-relaxed text-muted">
-            {project.summary}
-          </p>
-
-          <p className="label mt-6 text-muted/70">
-            {project.stack.join("  ·  ")}
-          </p>
-        </div>
-
-        <div className="flex flex-col items-start gap-5 md:items-end">
-          {project.cover && (
-            <div className="w-full overflow-hidden border border-border">
-              <Image
-                src={urlFor(project.cover).width(640).height(400).url()}
-                alt={project.cover.alt ?? project.title}
-                width={640}
-                height={400}
-                sizes="(min-width: 768px) 14rem, 100vw"
-                className="h-auto w-full transition-transform duration-500 group-hover:scale-[1.04]"
-              />
-            </div>
-          )}
-
-          <div className="flex items-center gap-5">
-            {project.demo && <ProjectLink href={project.demo}>Live</ProjectLink>}
-            {project.repo && <ProjectLink href={project.repo}>Code</ProjectLink>}
-          </div>
-        </div>
-      </article>
-    </li>
-  );
-}
-
-function ProjectLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="label group/link inline-flex items-center gap-1.5 border-b border-border pb-1 text-muted transition-colors hover:border-accent hover:text-accent"
-    >
-      {children}
-      <span
-        aria-hidden
-        className="transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`${project.title} — view details`}
+        className="w-full py-7 text-left outline-none focus-visible:bg-surface"
       >
-        ↗
-      </span>
-    </a>
+        <div className="flex items-start justify-between gap-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="label text-accent">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 className="text-2xl font-medium transition-colors duration-300 group-hover:text-accent md:text-3xl">
+                {project.title}
+              </h3>
+              <ProjectBadge kind={project.kind} />
+            </div>
+
+            <p className="label mt-3 text-muted">
+              {project.year}
+              <span aria-hidden className="mx-2">
+                ·
+              </span>
+              {project.role}
+            </p>
+
+            <p className="label mt-3 text-muted/70">
+              {project.stack.join("  ·  ")}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-start gap-5">
+            {hasProjectImage(project) && (
+              <div className="hidden w-44 overflow-hidden border border-border sm:block">
+                <ProjectImage
+                  project={project}
+                  width={640}
+                  height={400}
+                  sizes="11rem"
+                  className="transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+              </div>
+            )}
+
+            <span
+              aria-hidden
+              className="mt-1 text-muted transition-all duration-300 group-hover:translate-x-1 group-hover:text-accent"
+            >
+              →
+            </span>
+          </div>
+        </div>
+      </button>
+    </li>
   );
 }

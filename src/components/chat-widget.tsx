@@ -138,11 +138,14 @@ export function ChatWidget({ context }: { context: ChatContext }) {
               </button>
             </header>
 
+            {/* Same reason as the project modal: Lenis cancels wheel events
+                at the root, so this log needs an explicit opt-out to scroll. */}
             <div
               ref={logRef}
+              data-lenis-prevent
               role="log"
               aria-live="polite"
-              className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4"
             >
               {messages.map((message) => (
                 <Bubble key={message.id} message={message} onAsk={ask} />

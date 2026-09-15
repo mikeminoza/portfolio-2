@@ -28,16 +28,23 @@ export type Role = {
   highlights: string[];
 };
 
+/** Shipped for an employer or client, versus built on his own time. */
+export type ProjectKind = "professional" | "personal";
+
 export type Project = {
   slug: string;
   title: string;
   summary: string;
   year: string;
   role: string;
+  kind: ProjectKind;
   stack: string[];
   repo?: string;
   demo?: string;
+  /** Hotspot-aware cover from the CMS. Takes precedence when set. */
   cover?: Cover | null;
+  /** Checked-in screenshot, used before the CMS has a cover. */
+  staticCover?: { src: string; alt: string };
 };
 
 export type SkillGroup = {
@@ -107,15 +114,35 @@ const fallbackExperience: Role[] = [
 
 const fallbackProjects: Project[] = [
   {
+    slug: "musticker",
+    title: "Musticker",
+    summary:
+      "A Korea-based e-commerce platform for custom stickers, now preparing for global expansion. Contributed to the backend as part of the team at Glophics — API features, database design and performance work.",
+    year: "2025 — Present",
+    role: "Backend",
+    kind: "professional",
+    stack: ["Laravel", "PHP", "Nuxt.js", "MySQL"],
+    demo: "https://www.musticker.com/kr",
+    staticCover: {
+      src: "/projects/musticker.jpg",
+      alt: "The Musticker storefront, showing the custom sticker product range.",
+    },
+  },
+  {
     slug: "trackle",
     title: "Trackle",
     summary:
       "A financial tracking app with automated insights and an integrated assistant, built to make personal spending legible rather than just logged.",
     year: "2025",
     role: "Full-stack",
+    kind: "personal",
     stack: ["Next.js", "TypeScript", "Supabase", "Gemini AI"],
     repo: "https://github.com/mikeminoza/Trackle",
     demo: "https://trackle-web.vercel.app",
+    staticCover: {
+      src: "/projects/trackle.jpg",
+      alt: "The Trackle landing page, introducing its budgeting and insights features.",
+    },
   },
   {
     slug: "sparkquiz",
@@ -124,9 +151,14 @@ const fallbackProjects: Project[] = [
       "A multiple-choice quiz generator that turns source material into a reviewable question set, with management for the quizzes it creates.",
     year: "2025",
     role: "Full-stack",
+    kind: "personal",
     stack: ["Next.js", "React", "Supabase", "Gemini AI"],
     repo: "https://github.com/mikeminoza/SparkQuiz",
     demo: "https://sparkquiz.vercel.app",
+    staticCover: {
+      src: "/projects/sparkquiz.jpg",
+      alt: "The SparkQuiz landing page, showing its quiz generation flow.",
+    },
   },
   {
     slug: "mednexus",
@@ -135,6 +167,7 @@ const fallbackProjects: Project[] = [
       "A school clinic management system handling appointments and medical documents for students and employees.",
     year: "2024",
     role: "Full-stack",
+    kind: "personal",
     stack: ["Laravel", "PHP", "MySQL", "Bootstrap"],
     repo: "https://github.com/mikeminoza/MedNexus",
   },
@@ -228,6 +261,7 @@ type ProjectResult = {
   summary?: string;
   year?: string;
   role?: string;
+  kind?: ProjectKind | null;
   stack?: (string | null)[] | null;
   repo?: string | null;
   demo?: string | null;
@@ -310,10 +344,16 @@ export async function getProjects(): Promise<Project[]> {
     summary: p.summary ?? "",
     year: p.year ?? "",
     role: p.role ?? "",
+    // Unset in the CMS means a personal project — the safer default, since
+    // claiming employer work that isn't his is the worse failure.
+    kind: p.kind === "professional" ? "professional" : "personal",
     stack: strings(p.stack),
     repo: p.repo ?? undefined,
     demo: p.demo ?? undefined,
     cover: p.cover ?? null,
+    // Keep the checked-in screenshot as a fallback for projects the CMS
+    // knows about but has no cover image for yet.
+    staticCover: fallbackProjects.find((f) => f.slug === p.slug)?.staticCover,
   }));
 }
 
