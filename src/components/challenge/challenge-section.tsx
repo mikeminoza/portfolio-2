@@ -136,8 +136,9 @@ export function ChallengeSection() {
       </SectionHeading>
 
       <p className="mb-8 max-w-2xl text-pretty leading-relaxed text-muted">
-        Pick a language and a difficulty and solve something. Your code runs in
-        a worker in your own browser — nothing is uploaded anywhere.
+        Pick a language and a difficulty, write a solution, and run it against
+        the test cases. Everything executes in a worker in your own browser —
+        your code is never uploaded.
       </p>
 
       <div className="mb-6 flex flex-wrap items-center gap-6">
