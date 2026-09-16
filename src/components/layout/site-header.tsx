@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useScroll, useMotionValueEvent } from "motion/react";
 import { useMotionSafe } from "@/hooks/use-motion-safe";
+import { Monogram } from "@/components/layout/monogram";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
@@ -25,13 +26,6 @@ export function SiteHeader({ name }: { name: string }) {
 
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
-  // Initials rather than a first name — terser, and it reads as a mark.
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 3);
-
   return (
     <motion.header
       initial={{ opacity: 0, y: -12 }}
@@ -44,8 +38,12 @@ export function SiteHeader({ name }: { name: string }) {
       )}
     >
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4 md:px-10">
-        <a href="#" className="label text-foreground">
-          {initials}
+        <a
+          href="#"
+          aria-label={`${name} — back to top`}
+          className="text-foreground transition-colors hover:text-accent"
+        >
+          <Monogram />
         </a>
 
         <div className="flex items-center gap-4 md:gap-6">

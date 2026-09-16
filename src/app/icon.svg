@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    Favicon. "MAM" is illegible at 32px, so this is the M alone with the
+    accent crossbar borrowed from the A — enough to read as the same mark.
+    Solid ground rather than transparent, since tab bars vary.
+  -->
+  <rect width="32" height="32" fill="#0b0f10"/>
+  <g fill="none" stroke="#e8edee" stroke-width="2.75" stroke-linecap="butt" stroke-linejoin="miter">
+    <path d="M8 24V9l8 9 8-9v15"/>
+  </g>
+  <path d="M11 27h10" stroke="#22d3ee" stroke-width="2.75"/>
+</svg>
