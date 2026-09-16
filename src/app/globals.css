@@ -90,6 +90,32 @@
   background-size: 72px 72px;
 }
 
+/*
+ * Slim, themed scrollbar for panels. The platform default is a chunky light
+ * bar that reads as a foreign element inside a dark bordered panel.
+ */
+@utility scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+}
+
 /* Lenis */
 html.lenis,
 html.lenis body {

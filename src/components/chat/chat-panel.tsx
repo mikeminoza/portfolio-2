@@ -5,20 +5,23 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChatBubble, type ChatMessage } from "@/components/chat/chat-message";
 import { useEscapeKey } from "@/hooks/use-escape-key";
 import { useMotionSafe } from "@/hooks/use-motion-safe";
-import { answer, OPENING_SUGGESTIONS, type ChatContext } from "@/lib/chat";
+import {
+  ask as askAssistant,
+  OPENING_SUGGESTIONS,
+  type AnswerSource,
+  type ChatContext,
+} from "@/lib/chat";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { Z } from "@/lib/z-layers";
 
-/** A beat before replying reads as considered; instant reads as canned. */
-const REPLY_DELAY_MS = 380;
-
 /**
- * Scripted assistant panel. Answers come from `lib/chat.ts`, which reads the
- * same content the page renders — so it cannot contradict the CV.
+ * Assistant panel.
  *
- * It is not a language model, and the header says so. Letting a visitor
- * believe otherwise would be the wrong kind of surprise.
+ * Answers come from Gemini, grounded server-side in the same content the page
+ * renders, and fall back to the scripted engine when the API is unconfigured,
+ * out of quota or failing. The header states which one answered rather than
+ * letting the visitor assume.
  *
  * Open state is owned by the dock, so the trigger can sit beside the other
  * launchers rather than being positioned relative to this panel.
@@ -35,12 +38,13 @@ export function ChatPanel({
   const [draft, setDraft] = useState("");
   const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  /** Which engine answered last — the header says so rather than guessing. */
+  const [source, setSource] = useState<AnswerSource | null>(null);
 
-  const { reduced, safe } = useMotionSafe();
+  const { safe } = useMotionSafe();
   const nextId = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEscapeKey(open, onClose);
 
@@ -49,7 +53,7 @@ export function ChatPanel({
   }, []);
 
   const ask = useCallback(
-    (question: string) => {
+    async (question: string) => {
       const trimmed = question.trim();
       if (!trimmed) return;
 
@@ -57,21 +61,19 @@ export function ChatPanel({
       setDraft("");
       setThinking(true);
 
-      const reply = answer(trimmed, context);
-      const timer = setTimeout(
-        () => {
-          setThinking(false);
-          push({
-            from: "site",
-            text: reply.text,
-            suggestions: reply.suggestions,
-          });
-        },
-        reduced ? 0 : REPLY_DELAY_MS,
-      );
-      timers.current.push(timer);
+      try {
+        const reply = await askAssistant(trimmed, context);
+        setSource(reply.source);
+        push({
+          from: "site",
+          text: reply.text,
+          suggestions: reply.suggestions,
+        });
+      } finally {
+        setThinking(false);
+      }
     },
-    [context, push, reduced],
+    [context, push],
   );
 
   // Greet on first open, not on mount — nothing should happen before asking.
@@ -88,17 +90,17 @@ export function ChatPanel({
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Keep the newest message in view.
+  /*
+   * Keep the newest message in view — including on reopen. Closing unmounts
+   * the panel, so the log remounts at scrollTop 0 with `messages` unchanged;
+   * without `open` in the deps the effect never fires and the visitor lands
+   * back at the start of the conversation.
+   */
   useEffect(() => {
+    if (!open) return;
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
-  }, [messages, thinking]);
-
-  // Don't fire a reply into an unmounted tree.
-  useEffect(() => {
-    const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
-  }, []);
+  }, [open, messages, thinking]);
 
   return (
     <AnimatePresence>
@@ -124,8 +126,15 @@ export function ChatPanel({
                 <span className="mx-2 text-muted">/</span>
                 Ask
               </p>
+              {/*
+                The AI label has to follow what actually answered. Calling a
+                scripted fallback "AI" would be a lie to the visitor, so the
+                fallback says the AI is unavailable instead.
+              */}
               <p className="mt-1 font-mono text-[10px] text-muted">
-                Scripted answers from this site&rsquo;s content
+                {source === "scripted"
+                  ? "AI unavailable · answering from this site’s content"
+                  : "AI assistant · answers only from this site’s content"}
               </p>
             </div>
             <button
@@ -145,10 +154,14 @@ export function ChatPanel({
             data-lenis-prevent
             role="log"
             aria-live="polite"
-            className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4"
+            className="scroll-slim min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4"
           >
             {messages.map((message) => (
-              <ChatBubble key={message.id} message={message} onAsk={ask} />
+              <ChatBubble
+                key={message.id}
+                message={message}
+                onAsk={(q) => void ask(q)}
+              />
             ))}
             {thinking && <TypingDots />}
           </div>
@@ -156,7 +169,7 @@ export function ChatPanel({
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              ask(draft);
+              void ask(draft);
             }}
             className="flex shrink-0 items-center gap-2 border-t border-border p-3"
           >

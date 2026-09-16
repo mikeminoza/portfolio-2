@@ -56,7 +56,7 @@ export function FloatingDock({ context }: { context: ChatContext }) {
           tooltip={
             openPanel === "chat"
               ? "Close the assistant"
-              : "Ask about this portfolio"
+              : "Ask the AI about his work"
           }
           onClick={() => toggle("chat")}
           active={openPanel === "chat"}

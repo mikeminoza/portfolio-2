@@ -228,27 +228,79 @@ so Python's `2.0` matches JavaScript's `2`.
 
 ## Assistant
 
-A floating widget (bottom right) that answers questions about the CV.
+A floating panel that answers questions about the CV.
 
-**It is scripted, not a language model** — and the panel header says so, because
-letting a visitor assume otherwise would be the wrong kind of surprise. There is
-no API key, no per-message cost and no public abuse surface.
-
-`src/lib/chat.ts` holds the whole engine as one pure function:
+Answers come from **Gemini** (`@google/genai`), grounded server-side, with the
+scripted engine in `lib/chat/engine.ts` as the fallback.
 
 ```
-answer(query, context) -> { text, suggestions }
+ask()  ──▶  POST /api/chat  ──▶  Gemini
+  │                                │
+  └── scripted engine  ◀───────────┘  on 503 / 429 / 502 / network
 ```
 
-It resolves in three passes — a project named outright, then a technology named
-outright, then a keyword-scored intent (experience, projects, stack, education,
-contact, location), with an honest fallback that says what it does and does not
-know. Every answer is built from the same `content.ts` the page renders, so the
-assistant cannot contradict the CV: add a project in the CMS and it starts
-answering about it with no code change.
+The fallback is not decoration: it runs with no key, no network and no cost,
+so an unconfigured deploy, an exhausted quota or a failed request still leaves
+a working assistant instead of an error. The panel header states which engine
+answered rather than letting the visitor assume: it reads "AI assistant" by
+default and "AI unavailable" once a scripted answer has been served. Labelling
+a canned answer as AI would be a lie to the visitor, so the label follows what
+actually answered.
 
-To make it live later, replace the body of `answer()` with a call to a route
-handler. The widget, the types and the call site do not change.
+When no scripted intent matches, the engine keyword-searches the content
+before giving up — "has he led a team?" has no intent, but an Applus highlight
+literally says he did. Two matching terms are required so a single common word
+cannot drag in something irrelevant. It is crude on purpose: it only has to
+beat "I don't know", which is a dead end for the visitor.
+
+### Grounding
+
+The whole risk is invention. A scripted bot cannot claim experience he does
+not have; a model can, in his voice, to a recruiter. So:
+
+The prompt answers whatever is asked, including general questions unrelated
+to the profile. There is exactly one hard limit, and it is narrow: never state
+that he has a skill, tool, employer, title or qualification that is not in the
+PROFILE, and never invent dates, durations, seniority or salary. That guard
+exists to protect him from a confident wrong answer to a recruiter — it is not
+a reason to refuse questions, and the prompt says so explicitly.
+
+Earlier revisions were far stricter ("never infer") and made the assistant
+stonewall fair questions. That was worse than the risk it guarded against.
+- The context is assembled **server-side** in `lib/chat/context.ts`, never
+  taken from the request — otherwise a caller could rewrite the facts the
+  model answers from and make the site state untrue things about him.
+- Follow-up suggestions still come from the scripted engine, since those are
+  derived from real content and cannot point at something that doesn't exist.
+- The system prompt treats the visitor's message as a question, never an
+  instruction.
+
+### Scroll behaviour
+
+Closing unmounts the panel, so the log remounts at `scrollTop: 0`. The
+scroll-to-newest effect therefore depends on `open` as well as `messages` —
+without it the effect never fires on reopen and the visitor lands back at the
+first message of an existing conversation.
+
+Panels use the `scroll-slim` utility from `globals.css` rather than the
+platform scrollbar, which renders as a chunky light bar inside a dark panel.
+
+### Limits
+
+Questions are capped at 300 characters and 15 per minute per IP, and answers
+at 400 output tokens. The throttle is in-memory, so it is per serverless
+instance — enough to stop a visitor burning quota, not a security control.
+
+`GEMINI_MODEL` is overridable because Google retires and renames model ids;
+a hardcoded one becomes a 404 months later.
+
+Thinking is turned **off** (`thinkingConfig: { thinkingBudget: 0 }`). Gemini
+2.5 thinks by default and charges those tokens against `maxOutputTokens`,
+which silently truncated answers mid-word. This is lookup-and-summarise over a
+short profile — there is nothing to reason about — so disabling it returns the
+whole budget to the answer, and is faster and cheaper. A response that still
+reports `finishReason: MAX_TOKENS` falls back to the scripted engine rather
+than showing half a sentence.
 
 ## Animation notes
 

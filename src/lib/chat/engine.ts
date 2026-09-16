@@ -7,15 +7,15 @@ import type {
 } from "@/lib/content";
 
 /**
- * Static answer engine.
+ * Scripted answer engine.
  *
  * Every answer is derived from the same content the page renders, so the
  * assistant can't drift from the CV — if a project is added in the CMS, it
  * starts answering about it with no code change.
  *
- * This is deliberately a pure function. Swapping in a real model later means
- * replacing the body of `answer()` with a fetch to a route handler; the
- * widget, the types and the call site stay as they are.
+ * Kept as the fallback now that Gemini answers by default: it runs with no
+ * key, no network and no cost, so the assistant still works when the API is
+ * unavailable, unconfigured, or rate-limited.
  */
 
 export type ChatContext = {
@@ -379,8 +379,85 @@ export function answer(query: string, ctx: ChatContext): ChatAnswer {
 
   if (ranked[0]) return ranked[0].intent.build(ctx);
 
+  // 4. No intent matched — search the content before giving up. "Has he led a
+  //    team?" has no intent, but the Applus highlight literally says he did.
+  const found = search(q, ctx);
+  if (found) return found;
+
   return {
     text: "I only know what's on this page — his experience, projects, stack, education and contact details. Try one of these:",
     suggestions: OPENING_SUGGESTIONS.slice(0, 4),
+  };
+}
+
+/** Words too common to tell anything apart. */
+const STOPWORDS = new Set([
+  "a", "an", "and", "any", "are", "as", "at", "be", "been", "can", "did", "do",
+  "does", "ever", "for", "from", "had", "has", "have", "he", "her", "high",
+  "him", "his", "how", "in", "is", "it", "its", "kind", "know", "like", "many",
+  "me", "much", "of", "on", "or", "she", "some", "tell", "that", "the", "their",
+  "them", "there", "they", "this", "to", "use", "used", "uses", "was", "what",
+  "when", "where", "which", "who", "why", "with", "work", "worked", "you",
+  "your",
+]);
+
+/** Everything a free-text question could reasonably be about. */
+function corpus(ctx: ChatContext) {
+  const entries: { text: string; source: string }[] = [];
+
+  for (const role of ctx.roles) {
+    for (const highlight of role.highlights) {
+      entries.push({ text: highlight, source: `${role.company}` });
+    }
+  }
+  for (const project of ctx.projects) {
+    entries.push({
+      text: `${project.summary} Built with ${project.stack.join(", ")}.`,
+      source: project.title,
+    });
+  }
+  for (const group of ctx.skills) {
+    entries.push({ text: group.items.join(", "), source: group.title });
+  }
+  entries.push({
+    text: `${ctx.education.degree}${ctx.education.honors ? `, ${ctx.education.honors}` : ""} at ${ctx.education.school}, ${ctx.education.period}.`,
+    source: "Education",
+  });
+
+  return entries;
+}
+
+/**
+ * Keyword search over the content, used when no intent matches.
+ *
+ * Crude on purpose — it only has to beat "I don't know", which is a dead end
+ * for the visitor. Requiring two matching terms keeps single common words
+ * from dragging in something irrelevant.
+ */
+function search(query: string, ctx: ChatContext): ChatAnswer | null {
+  const terms = query
+    .split(" ")
+    .map((word) => word.trim())
+    .filter((word) => word.length > 2 && !STOPWORDS.has(word));
+
+  if (!terms.length) return null;
+
+  const hits = corpus(ctx)
+    .map((entry) => {
+      const haystack = entry.text.toLowerCase();
+      const score = terms.filter((term) => haystack.includes(term)).length;
+      return { entry, score };
+    })
+    .filter((hit) => hit.score >= Math.min(2, terms.length))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+
+  if (!hits.length) return null;
+
+  return {
+    text: hits
+      .map(({ entry }) => `${entry.source}: ${entry.text}`)
+      .join("\n\n"),
+    suggestions: ["What does he do?", "Show me his projects", "What's his stack?"],
   };
 }

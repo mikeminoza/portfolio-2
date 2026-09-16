@@ -16,6 +16,7 @@
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.7.4",
     "@codemirror/view": "^6.43.11",
+    "@google/genai": "^2.22.0",
     "@gsap/react": "^2.1.2",
     "@sanity/client": "^8.6.2",
     "@sanity/image-url": "^2.1.1",

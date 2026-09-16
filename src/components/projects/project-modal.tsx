@@ -122,7 +122,7 @@ export function ProjectModal({
             */}
             <ol
               data-lenis-prevent
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 md:px-8"
+              className="scroll-slim min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 md:px-8"
             >
               {projects.map((project, index) => (
                 <ProjectEntry
