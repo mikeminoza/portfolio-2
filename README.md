@@ -24,7 +24,9 @@ src/
     layout/      SiteHeader, SiteFooter, SectionHeading, ThemeToggle, Providers
     sections/    Hero, Experience, Skills
     projects/    ProjectsSection, ProjectRow, ProjectModal, ProjectImage, ProjectBadge
-    chat/        ChatWidget, ChatBubble
+    chat/        ChatPanel, ChatBubble
+    challenge/   ChallengeModal, CodeEditor, TestResults
+    dock/        FloatingDock, DockButton
   hooks/
     use-escape-key.ts      dismiss-on-Escape for overlays
     use-focus-trap.ts      Tab containment + initial focus
@@ -59,6 +61,16 @@ Three rules keep it from drifting back:
 
 Overlay behaviour (Escape, focus trapping, scroll locking) is in hooks, so
 the modal and the assistant cannot drift apart.
+
+### The floating dock
+
+Both launchers live in `dock/floating-dock.tsx` rather than inside their own
+features. A trigger positioned from inside each panel would have to guess the
+other's width to sit beside it; one container owns the row instead.
+
+The dock also owns which panel is open, so opening one closes the other. The
+challenge is a full modal, and leaving the chat panel open behind it would
+trap focus in two places at once.
 
 ## Design system
 
@@ -155,8 +167,10 @@ modal and the assistant's message log carry it.
 
 ## Code challenge
 
-A LeetCode-style editor at `04 / CHALLENGE`: pick a language and difficulty,
-solve the problem, run it against test cases.
+A LeetCode-style editor in a modal, launched from the floating dock beside
+the assistant: pick a language and difficulty, solve the problem, run it
+against test cases. It is not a page section — it stays out of the reading
+order and costs nothing until someone opens it.
 
 ### Where the code runs
 
