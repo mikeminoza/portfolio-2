@@ -322,7 +322,37 @@ Studio is embedded at `/studio`; there is no second app to deploy.
 2. `cp .env.local.example .env.local` and fill in the project ID.
 3. Add `http://localhost:3000` and your production URL under
    **API → CORS origins**, both with credentials allowed.
-4. Restart the dev server and open `/studio`.
+4. Create an Editor token under **API → Tokens** and put it in
+   `SANITY_API_WRITE_TOKEN`. It is a write credential — never `NEXT_PUBLIC_`.
+5. `pnpm seed` to populate the dataset from the bundled content.
+6. Restart the dev server and open `/studio`.
+
+### Seeding
+
+`pnpm seed` reads `SEED` from `lib/content.ts` — the same data the site
+renders before the CMS is connected — and writes it to Sanity, uploading the
+project screenshots as real image assets along the way.
+
+Every document has a stable id and is written with `createOrReplace`, so the
+script is idempotent. That also means it **overwrites** Studio edits to those
+documents: it is a seed, not a sync. It refuses to run against a dataset that
+already has content unless you pass `--force`:
+
+```
+pnpm seed -- --force
+```
+
+### Singletons
+
+`profile` and `education` are read with `[0]`, so exactly one of each must
+exist. `sanity.config.ts` enforces that in two places, and both are needed:
+
+- `schema.templates` removes them from the global "create new" menu.
+- `document.actions` removes duplicate and delete from the documents.
+
+The desk structure alone is not enough — it only controls navigation. Without
+these filters an editor can create a second Profile, and the site would
+silently render whichever one the query returned first.
 
 Until step 2 is done the site runs on the seed content in `src/lib/content.ts`
 and `/studio` shows a setup notice instead of crashing.

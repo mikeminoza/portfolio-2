@@ -228,6 +228,19 @@ const fallbackEducation: Education = {
   honors: "Cum Laude",
 };
 
+/**
+ * The bundled content, exported so `pnpm seed` can push it into the CMS.
+ * Keeping one source means the seed can never drift from what the site
+ * renders before Sanity is connected.
+ */
+export const SEED = {
+  profile: fallbackProfile,
+  experience: fallbackExperience,
+  projects: fallbackProjects,
+  skills: fallbackSkills,
+  education: fallbackEducation,
+};
+
 /** Revalidate published content every minute. */
 const fetchOptions = { next: { revalidate: 60 } } as const;
 
