@@ -14,6 +14,7 @@ import {
   getProjects,
   getSkills,
 } from "@/lib/content";
+import { buildStructuredData, metaDescription } from "@/lib/seo";
 
 /** Groups worth putting on the banner — tools and practices read as filler. */
 const MARQUEE_GROUPS = ["Languages", "Frameworks & libraries", "Database & backend"];
@@ -35,8 +36,26 @@ export default async function Home() {
     ),
   ];
 
+  const structuredData = buildStructuredData({
+    profile,
+    roles: experience,
+    projects,
+    skills,
+    education,
+    description: metaDescription(profile),
+  });
+
   return (
     <>
+      {/*
+        Rendered server-side so crawlers see it in the initial HTML. The JSON
+        is machine-read only, so `dangerouslySetInnerHTML` is the documented
+        way to emit it — React would otherwise escape the quotes.
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <ScrollProgress />
       <SiteHeader name={profile.name} />
       <main>

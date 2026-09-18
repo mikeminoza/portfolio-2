@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SanityImageSource } from "@sanity/image-url";
 import { getClient } from "@/sanity/client";
 import { isSanityConfigured } from "@/sanity/env";
@@ -296,7 +297,7 @@ type EducationResult = {
 const strings = (value: (string | null)[] | null | undefined): string[] =>
   (value ?? []).filter((item): item is string => typeof item === "string");
 
-export async function getProfile(): Promise<Profile> {
+async function fetchProfile(): Promise<Profile> {
   if (!isSanityConfigured) return fallbackProfile;
 
   const profile = await getClient().fetch<ProfileResult>(
@@ -322,7 +323,7 @@ export async function getProfile(): Promise<Profile> {
   };
 }
 
-export async function getExperience(): Promise<Role[]> {
+async function fetchExperience(): Promise<Role[]> {
   if (!isSanityConfigured) return fallbackExperience;
 
   const roles = await getClient().fetch<RoleResult[]>(
@@ -341,7 +342,7 @@ export async function getExperience(): Promise<Role[]> {
   }));
 }
 
-export async function getProjects(): Promise<Project[]> {
+async function fetchProjects(): Promise<Project[]> {
   if (!isSanityConfigured) return fallbackProjects;
 
   const projects = await getClient().fetch<ProjectResult[]>(
@@ -370,7 +371,7 @@ export async function getProjects(): Promise<Project[]> {
   }));
 }
 
-export async function getSkills(): Promise<SkillGroup[]> {
+async function fetchSkills(): Promise<SkillGroup[]> {
   if (!isSanityConfigured) return fallbackSkills;
 
   const groups = await getClient().fetch<SkillGroupResult[]>(
@@ -386,7 +387,7 @@ export async function getSkills(): Promise<SkillGroup[]> {
   }));
 }
 
-export async function getEducation(): Promise<Education> {
+async function fetchEducation(): Promise<Education> {
   if (!isSanityConfigured) return fallbackEducation;
 
   const education = await getClient().fetch<EducationResult>(
@@ -403,3 +404,16 @@ export async function getEducation(): Promise<Education> {
     honors: education.honors ?? undefined,
   };
 }
+
+/**
+ * Public accessors, memoised per request.
+ *
+ * `generateMetadata` and the page body both need the profile, and React's
+ * `cache` collapses that into one round trip instead of two — the pattern the
+ * Next.js metadata docs prescribe for exactly this split.
+ */
+export const getProfile = cache(fetchProfile);
+export const getExperience = cache(fetchExperience);
+export const getProjects = cache(fetchProjects);
+export const getSkills = cache(fetchSkills);
+export const getEducation = cache(fetchEducation);
