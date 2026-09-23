@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "@/components/layout/providers";
 import { getProfile, getSkills } from "@/lib/content";
 import { metaDescription } from "@/lib/seo";
@@ -112,6 +113,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <Providers>{children}</Providers>
+        {/*
+          Real-user Core Web Vitals. Renders nothing and ships its own
+          Suspense boundary, so it sits in the server layout as-is. Only
+          reports on Vercel — a no-op locally.
+        */}
+        <SpeedInsights />
       </body>
     </html>
   );
