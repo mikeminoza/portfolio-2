@@ -11,7 +11,6 @@
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed-sanity.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.125.0",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/state": "^6.7.4",

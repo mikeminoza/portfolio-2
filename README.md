@@ -193,23 +193,43 @@ a proper origin.
 
 ### Where the problems come from
 
-`GET /api/challenge?difficulty=…` generates one with Claude and falls back to
-the nine bundled problems in `lib/challenge/problems.ts` whenever it can't.
+`GET /api/challenge?difficulty=…` serves a generated problem from a pool, and
+falls back to the nine bundled problems in `lib/challenge/problems.ts`
+whenever the pool is empty. It shares `GEMINI_API_KEY` with the chat
+assistant — without the key the endpoint quietly serves bundled problems and
+the feature works unchanged.
 
-**A generated problem is proved before it is served.** A model will sometimes
-produce a problem whose expected values are wrong, and shipping that means a
-visitor writes a correct solution and is told it failed — worse than having no
-AI at all. So the model also returns a reference solution, which is executed
-against its own test cases in `node:vm`; anything that can't pass its own
-tests is discarded for a curated one.
+**Nobody ever waits for the model.** A generation takes ten to fifteen
+seconds, which is far too long to hold a Shuffle click, so the request path
+never awaits one: it answers from the pool in milliseconds and schedules the
+fill with `after`, which keeps the work alive past the response instead of
+letting the platform freeze the instance mid-batch. The first visitor in a
+window gets a curated problem; by their next click the pool has landed and
+everyone after them gets a generated one with no spinner at all. The route
+sets `maxDuration = 60` so that background batch has room to finish.
 
-Cost is bounded by construction. Generated problems are pooled three-per-
-difficulty for 30 minutes, and concurrent requests share one in-flight call, so
-traffic does not multiply spend — at most three calls per difficulty per
-window however many people visit. Three is also the smallest pool that makes
-Shuffle feel random; a single cached problem would return the same thing for
-the whole window. Set `ANTHROPIC_API_KEY` to enable it — without the key the
-endpoint quietly serves bundled problems and the feature works unchanged.
+**The model never states the answers.** It returns a reference solution and
+the test *inputs*; the expected values are computed by executing that
+reference in `node:vm`. Asking for the answers directly was tried and was the
+single largest source of broken problems — the model writes a sound algorithm
+and then mispredicts what it returns ("want 102, got 9"), and on `hard` that
+discarded nearly every candidate. Executing the reference removes the guess
+while keeping the guarantee that matters: the tests are exactly what a correct
+solution produces. A reference that throws, loops, never declares its entry
+point, or returns `undefined` is still discarded for a curated problem, so a
+visitor is never told a correct solution failed.
+
+Cost is bounded by construction, and the binding constraint is Gemini's free
+tier: **20 requests per day**. A pool is filled in a single batched call —
+three problems in one response rather than three responses — so all three
+difficulties cost three requests per six-hour window, not nine, and the pool
+goes from empty to full in one round trip. Concurrent visitors arriving on an
+empty pool schedule one batch between them rather than one each. A batch that
+comes back partly unusable keeps whatever passed verification, because
+discarding two good problems to re-request costs a request that is genuinely
+scarce. Each serverless instance keeps its own cache, which is why the window
+is hours rather than minutes; shorten it if the key is on a paid tier. Three
+is also the smallest pool that makes Shuffle feel random.
 
 The caller passes the slug it already has as `exclude`, so Shuffle moves on
 rather than handing back the problem already on screen.

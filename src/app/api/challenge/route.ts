@@ -1,8 +1,16 @@
 import { generateProblem } from "@/lib/challenge/generate";
 import { DIFFICULTIES, type Difficulty } from "@/lib/challenge/problems";
 
-/** Generated per request (behind a cache), so nothing here is prerenderable. */
+/** Served per request (from a pool), so nothing here is prerenderable. */
 export const dynamic = "force-dynamic";
+
+/**
+ * The response itself is instant, but `generateProblem` schedules a pool fill
+ * with `after`, and that background work runs against this budget. Left at
+ * the default (10s on Vercel Hobby) the platform would kill a batch halfway
+ * and spend the quota for nothing.
+ */
+export const maxDuration = 60;
 
 function isDifficulty(value: string | null): value is Difficulty {
   return value !== null && (DIFFICULTIES as readonly string[]).includes(value);
